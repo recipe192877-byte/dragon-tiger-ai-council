@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dragon Tiger | AI Council</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+</head>
+<body>
+
+    <div class="accuracy-tab" id="accuracy-tab">
+        Accuracy: 0% <br>
+        <span style="font-size: 0.8rem; color: #94a3b8;">(0/0)</span>
+    </div>
+
+    <div class="header">
+        <h1>Dragon Tiger</h1>
+        <p>Powered exclusively by AI Council Intelligence</p>
+    </div>
+
+    <div class="container">
+        
+        <!-- Input Panel -->
+        <div class="panel">
+            <h2>Add Result to History</h2>
+            <div class="controls">
+                <button class="btn-dragon" onclick="addResult('Dragon')">Dragon</button>
+                <button class="btn-tiger" onclick="addResult('Tiger')">Tiger</button>
+                <button class="btn-tie" onclick="addResult('Tie')">Tie</button>
+                <button class="btn-undo" onclick="undoHistory()">Undo ↩</button>
+                <button class="btn-clear" onclick="clearHistory()">Clear History</button>
+            </div>
+        </div>
+
+        <!-- History Panel -->
+        <div class="panel">
+            <h2>Recent History Board <span id="history-count" style="font-size: 0.9rem; float: right; color: #94a3b8;">Count: 0</span></h2>
+            <div class="history-container" id="history-board">
+                <div style="color: #64748b; font-size: 0.9rem;">No history yet. Click buttons above to add.</div>
+            </div>
+        </div>
+
+        <!-- AI Action Panel -->
+        <div class="panel action-panel">
+            <button class="btn-predict" id="btn-predict" onclick="askAICouncil()">ASK AI COUNCIL</button>
+            
+            <div class="loader" id="loader" style="display: none;"></div>
+
+            <div class="result-display" id="result-display">
+                <div class="confidence" id="res-conf">Confidence: HIGH</div>
+                <div class="final-prediction" id="res-pred">DRAGON</div>
+                <div class="reasoning" id="res-reason">"Streak pattern strongly favors Dragon continuation."</div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Load initial history
+        fetchHistory();
+
+        function updateHistoryBoard(history, stats) {
+            const board = document.getElementById('history-board');
+            const count = document.getElementById('history-count');
+            count.textContent = `Count: ${history.length}`;
+
+            // Update Accuracy Tab
+            if (stats && stats.total_predictions > 0) {
+                let acc = Math.round((stats.correct_predictions / stats.total_predictions) * 100);
+                document.getElementById('accuracy-tab').innerHTML = `Accuracy: ${acc}% <br><span style="font-size: 0.8rem; color: #94a3b8;">(${stats.correct_predictions}/${stats.total_predictions})</span>`;
+            } else {
+                document.getElementById('accuracy-tab').innerHTML = `Accuracy: 0% <br><span style="font-size: 0.8rem; color: #94a3b8;">(0/0)</span>`;
+            }
+
+            if (history.length === 0) {
+                board.innerHTML = '<div style="color: #64748b; font-size: 0.9rem;">No history yet. Click buttons above to add.</div>';
+                return;
+            }
+
+            board.innerHTML = '';
+            history.forEach(res => {
+                const bead = document.createElement('div');
+                let initial = res === 'Dragon' ? 'D' : (res === 'Tiger' ? 'T' : 'Tie');
+                bead.className = `history-bead bead-${initial}`;
+                bead.textContent = initial;
+                board.appendChild(bead);
+            });
+            
+            // Auto scroll to bottom of history
+            board.scrollTop = board.scrollHeight;
+        }
+
+        async function fetchHistory() {
+            const res = await fetch('/api/history');
+            const data = await res.json();
+            updateHistoryBoard(data.history, data.stats);
+        }
+
+        async function addResult(result) {
+            const res = await fetch('/api/history', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'add', result: result })
+            });
+            const data = await res.json();
+            updateHistoryBoard(data.history, data.stats);
+            
+            // Hide previous prediction
+            document.getElementById('result-display').style.display = 'none';
+
+            // Auto-predict if exactly 20 results (or multiples of 20 like 40, 60...)
+            if (data.history.length > 0 && data.history.length % 20 === 0) {
+                askAICouncil();
+            }
+        }
+
+        async function undoHistory() {
+            const res = await fetch('/api/history', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'undo' })
+            });
+            const data = await res.json();
+            updateHistoryBoard(data.history, data.stats);
+            document.getElementById('result-display').style.display = 'none';
+        }
+
+        async function clearHistory() {
+            const res = await fetch('/api/history', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'clear' })
+            });
+            const data = await res.json();
+            updateHistoryBoard(data.history, data.stats);
+            document.getElementById('result-display').style.display = 'none';
+        }
+
+        async function askAICouncil() {
+            const btn = document.getElementById('btn-predict');
+            const loader = document.getElementById('loader');
+            const resultDisplay = document.getElementById('result-display');
+
+            // UI State loading
+            btn.disabled = true;
+            btn.textContent = "COUNCIL IS THINKING...";
+            resultDisplay.style.display = 'none';
+            loader.style.display = 'inline-block';
+
+            try {
+                const res = await fetch('/api/predict');
+                const data = await res.json();
+
+                // Update UI State success
+                document.getElementById('res-pred').textContent = data.prediction;
+                document.getElementById('res-pred').className = `final-prediction pred-${data.prediction}`;
+                
+                document.getElementById('res-conf').textContent = `Confidence: ${data.confidence}`;
+                document.getElementById('res-reason').textContent = `"${data.reasoning}"`;
+
+                loader.style.display = 'none';
+                resultDisplay.style.display = 'flex';
+            } catch (e) {
+                alert("Error connecting to AI Council.");
+                loader.style.display = 'none';
+            }
+
+            btn.disabled = false;
+            btn.textContent = "ASK AI COUNCIL";
+        }
+    </script>
+</body>
+</html>
