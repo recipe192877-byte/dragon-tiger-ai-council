@@ -31,25 +31,25 @@ COUNCIL_MEMBERS = [
     }
 ]
 
-CHAIRMAN_PROMPT = """You are the Chairman of the Dragon Tiger AI Council. Two expert analysts have reviewed the recent game history and provided their opinions on what will come next.
+CHAIRMAN_PROMPT = """You are the Chairman of the Dragon Tiger AI Council.
 
-Game History (Chronological):
+Game History (most recent on the right):
 {history}
 
 Council Opinions:
 {opinions}
 
-Your job is to synthesize these opinions and make a final prediction for the next round.
-You MUST choose either "Dragon", "Tiger", or "Tie". (Note: Tie is rare, so only choose it if you are highly confident).
+RULES:
+1. Look at the LAST 5-10 results carefully.
+2. Count how many times Dragon appeared vs Tiger in recent history.
+3. Analyze if there is a streak or alternation pattern.
+4. Make your prediction: choose EXACTLY ONE of "Dragon" or "Tiger".
+5. Only choose "Tie" if you see very strong evidence.
 
-Format your response EXACTLY as valid JSON:
-{{
-  "prediction": "Dragon / Tiger / Tie",
-  "confidence": "HIGH / MEDIUM / LOW",
-  "reasoning": "A short 1-line explanation of why in English or Hindi."
-}}
+You MUST respond with ONLY this JSON (no markdown, no explanation before or after):
+{{"prediction": "Dragon", "confidence": "HIGH", "reasoning": "reason here"}}
 
-IMPORTANT: Return ONLY the JSON, no other text or markdown formatting."""
+Replace the values with your actual prediction. The prediction field must be exactly "Dragon" or "Tiger" or "Tie"."""
 
 class DragonTigerCouncil:
     def __init__(self):
@@ -89,6 +89,20 @@ class DragonTigerCouncil:
         
         return "[ALL_MODELS_FAILED]"
 
+    def _smart_fallback(self, history):
+        """If AI fails, use simple frequency-based fallback instead of always Tiger."""
+        recent = history[-10:] if len(history) >= 10 else history
+        d_count = recent.count('Dragon')
+        t_count = recent.count('Tiger')
+        # Predict whichever appeared LESS (mean reversion)
+        if d_count < t_count:
+            return "Dragon"
+        elif t_count < d_count:
+            return "Tiger"
+        else:
+            # Equal — check last result and predict opposite
+            return "Dragon" if history[-1] == "Tiger" else "Tiger"
+
     def get_prediction(self, history):
         if not history:
             return {
@@ -107,7 +121,7 @@ class DragonTigerCouncil:
             }
 
         history_str = " -> ".join(history)
-        user_prompt = f"Recent History: {history_str}\nWhat is your analysis for the next round?"
+        user_prompt = f"Recent History (oldest to newest): {history_str}\nWhat is your analysis for the next round? Should it be Dragon or Tiger?"
 
         opinions = []
         opinions_text = ""
@@ -125,26 +139,47 @@ class DragonTigerCouncil:
 
         # 2. Chairman Synthesizes
         chairman_user_prompt = CHAIRMAN_PROMPT.format(history=history_str, opinions=opinions_text)
-        chairman_response = self._call_ai('You are a JSON-only API. Output strict JSON.', chairman_user_prompt, max_tokens=200)
+        chairman_response = self._call_ai(
+            'You are a prediction API. You MUST output ONLY valid JSON with keys: prediction, confidence, reasoning. No other text.',
+            chairman_user_prompt,
+            max_tokens=200
+        )
 
-        # 3. Parse JSON
+        # 3. Parse JSON with robust fallback
+        fallback_pred = self._smart_fallback(history)
         result = {
-            "prediction": "Tiger", # default fallback
+            "prediction": fallback_pred,
             "confidence": "LOW",
-            "reasoning": "Failed to parse chairman JSON.",
+            "reasoning": "AI response unclear, used pattern-based fallback.",
             "opinions": opinions
         }
         
-        try:
-            content = chairman_response.replace("```json", "").replace("```", "").strip()
-            idx_start = content.find('{')
-            idx_end = content.rfind('}') + 1
-            if idx_start != -1 and idx_end > idx_start:
-                parsed = json.loads(content[idx_start:idx_end])
-                result["prediction"] = parsed.get("prediction", "Tiger").strip()
-                result["confidence"] = parsed.get("confidence", "LOW").strip()
-                result["reasoning"] = parsed.get("reasoning", "Council agreed.").strip()
-        except Exception:
-            pass
+        if chairman_response and '[ALL_MODELS_FAILED]' not in chairman_response:
+            try:
+                content = chairman_response.replace("```json", "").replace("```", "").strip()
+                # Remove any thinking tags like <think>...</think>
+                import re
+                content = re.sub(r'<think>.*?</think>', '', content, flags=re.DOTALL).strip()
+                
+                idx_start = content.find('{')
+                idx_end = content.rfind('}') + 1
+                if idx_start != -1 and idx_end > idx_start:
+                    parsed = json.loads(content[idx_start:idx_end])
+                    pred = parsed.get("prediction", "").strip()
+                    # Validate prediction is one of the expected values
+                    if pred in ["Dragon", "Tiger", "Tie"]:
+                        result["prediction"] = pred
+                        result["confidence"] = parsed.get("confidence", "MEDIUM").strip()
+                        result["reasoning"] = parsed.get("reasoning", "Council agreed.").strip()
+                    elif "dragon" in pred.lower():
+                        result["prediction"] = "Dragon"
+                        result["confidence"] = parsed.get("confidence", "MEDIUM").strip()
+                        result["reasoning"] = parsed.get("reasoning", "Council agreed.").strip()
+                    elif "tiger" in pred.lower():
+                        result["prediction"] = "Tiger"
+                        result["confidence"] = parsed.get("confidence", "MEDIUM").strip()
+                        result["reasoning"] = parsed.get("reasoning", "Council agreed.").strip()
+            except Exception as e:
+                print(f"[Chairman Parse Error]: {e}")
 
         return result

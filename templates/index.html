@@ -109,8 +109,8 @@
             // Hide previous prediction
             document.getElementById('result-display').style.display = 'none';
 
-            // Auto-predict if exactly 20 results (or multiples of 20 like 40, 60...)
-            if (data.history.length > 0 && data.history.length % 20 === 0) {
+            // Auto-predict after every result once we have 15+ results
+            if (data.history.length >= 15) {
                 askAICouncil();
             }
         }
