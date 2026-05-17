@@ -156,29 +156,52 @@ class DragonTigerCouncil:
         
         if chairman_response and '[ALL_MODELS_FAILED]' not in chairman_response:
             try:
-                content = chairman_response.replace("```json", "").replace("```", "").strip()
-                # Remove any thinking tags like <think>...</think>
                 import re
+                content = chairman_response.replace("```json", "").replace("```", "").strip()
                 content = re.sub(r'<think>.*?</think>', '', content, flags=re.DOTALL).strip()
                 
+                parsed_json = None
                 idx_start = content.find('{')
                 idx_end = content.rfind('}') + 1
                 if idx_start != -1 and idx_end > idx_start:
-                    parsed = json.loads(content[idx_start:idx_end])
-                    pred = parsed.get("prediction", "").strip()
-                    # Validate prediction is one of the expected values
-                    if pred in ["Dragon", "Tiger", "Tie"]:
-                        result["prediction"] = pred
-                        result["confidence"] = parsed.get("confidence", "MEDIUM").strip()
-                        result["reasoning"] = parsed.get("reasoning", "Council agreed.").strip()
-                    elif "dragon" in pred.lower():
+                    try:
+                        parsed_json = json.loads(content[idx_start:idx_end])
+                    except Exception:
+                        pass
+                
+                # 1. Try JSON parsing
+                if parsed_json:
+                    pred = parsed_json.get("prediction", "").strip().lower()
+                    if "dragon" in pred:
                         result["prediction"] = "Dragon"
-                        result["confidence"] = parsed.get("confidence", "MEDIUM").strip()
-                        result["reasoning"] = parsed.get("reasoning", "Council agreed.").strip()
-                    elif "tiger" in pred.lower():
+                    elif "tiger" in pred:
                         result["prediction"] = "Tiger"
-                        result["confidence"] = parsed.get("confidence", "MEDIUM").strip()
-                        result["reasoning"] = parsed.get("reasoning", "Council agreed.").strip()
+                    elif "tie" in pred:
+                        result["prediction"] = "Tie"
+                        
+                    result["confidence"] = parsed_json.get("confidence", "MEDIUM").strip()
+                    result["reasoning"] = parsed_json.get("reasoning", "Council agreed.").strip()
+                
+                # 2. Try Regex fallback if JSON failed or prediction was empty
+                if not parsed_json or result["prediction"] not in ["Dragon", "Tiger", "Tie"]:
+                    match = re.search(r'"?prediction"?\s*[:=]\s*"?([a-zA-Z]+)"?', content, re.IGNORECASE)
+                    if match:
+                        pred_val = match.group(1).lower()
+                        if "dragon" in pred_val:
+                            result["prediction"] = "Dragon"
+                            result["reasoning"] = "Recovered from malformed JSON (Dragon)."
+                        elif "tiger" in pred_val:
+                            result["prediction"] = "Tiger"
+                            result["reasoning"] = "Recovered from malformed JSON (Tiger)."
+                    else:
+                        # 3. Super desperate fallback: just count mentions
+                        if content.lower().count("dragon") > content.lower().count("tiger"):
+                            result["prediction"] = "Dragon"
+                            result["reasoning"] = "Recovered from raw text context."
+                        elif content.lower().count("tiger") > content.lower().count("dragon"):
+                            result["prediction"] = "Tiger"
+                            result["reasoning"] = "Recovered from raw text context."
+                            
             except Exception as e:
                 print(f"[Chairman Parse Error]: {e}")
 
