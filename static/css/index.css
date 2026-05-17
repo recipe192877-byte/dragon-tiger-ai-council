@@ -1,9 +1,9 @@
 :root {
     --bg-color: #0f172a;
     --panel-bg: rgba(30, 41, 59, 0.7);
-    --dragon-color: #ef4444;
-    --tiger-color: #3b82f6;
-    --tie-color: #10b981;
+    --dragon-color: #3b82f6;
+    --tiger-color: #ef4444;
+    --tie-color: #eab308;
     --text-color: #f8fafc;
     --glow-spread: 15px;
 }
@@ -24,8 +24,8 @@ body {
     align-items: center;
     padding: 2rem;
     background-image: 
-        radial-gradient(circle at 15% 50%, rgba(239, 68, 68, 0.1), transparent 25%),
-        radial-gradient(circle at 85% 50%, rgba(59, 130, 246, 0.1), transparent 25%);
+        radial-gradient(circle at 15% 50%, rgba(59, 130, 246, 0.1), transparent 25%),
+        radial-gradient(circle at 85% 50%, rgba(239, 68, 68, 0.1), transparent 25%);
 }
 
 .header {
@@ -128,9 +128,9 @@ body {
     animation: popIn 0.3s ease-out;
 }
 
-.bead-D { background: var(--dragon-color); box-shadow: 0 0 var(--glow-spread) rgba(239, 68, 68, 0.5); }
-.bead-T { background: var(--tiger-color); box-shadow: 0 0 var(--glow-spread) rgba(59, 130, 246, 0.5); }
-.bead-Tie { background: var(--tie-color); box-shadow: 0 0 var(--glow-spread) rgba(16, 185, 129, 0.5); font-size: 0.9rem; }
+.bead-D { background: var(--dragon-color); box-shadow: 0 0 var(--glow-spread) rgba(59, 130, 246, 0.5); }
+.bead-T { background: var(--tiger-color); box-shadow: 0 0 var(--glow-spread) rgba(239, 68, 68, 0.5); }
+.bead-Tie { background: var(--tie-color); box-shadow: 0 0 var(--glow-spread) rgba(234, 179, 8, 0.5); font-size: 0.9rem; }
 
 /* Controls */
 .controls {
@@ -157,20 +157,20 @@ button:active {
 }
 
 .btn-dragon {
-    background: linear-gradient(135deg, #ef4444, #dc2626);
-    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
-}
-.btn-dragon:hover { box-shadow: 0 6px 20px rgba(239, 68, 68, 0.6); }
-
-.btn-tiger {
     background: linear-gradient(135deg, #3b82f6, #2563eb);
     box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
 }
-.btn-tiger:hover { box-shadow: 0 6px 20px rgba(59, 130, 246, 0.6); }
+.btn-dragon:hover { box-shadow: 0 6px 20px rgba(59, 130, 246, 0.6); }
+
+.btn-tiger {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+}
+.btn-tiger:hover { box-shadow: 0 6px 20px rgba(239, 68, 68, 0.6); }
 
 .btn-tie {
-    background: linear-gradient(135deg, #10b981, #059669);
-    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+    background: linear-gradient(135deg, #eab308, #ca8a04);
+    box-shadow: 0 4px 15px rgba(234, 179, 8, 0.4);
 }
 
 .btn-clear {
@@ -228,9 +228,9 @@ button:active {
     text-shadow: 0 0 20px rgba(255,255,255,0.2);
 }
 
-.pred-Dragon { color: var(--dragon-color); text-shadow: 0 0 30px rgba(239, 68, 68, 0.8); }
-.pred-Tiger { color: var(--tiger-color); text-shadow: 0 0 30px rgba(59, 130, 246, 0.8); }
-.pred-Tie { color: var(--tie-color); }
+.pred-Dragon { color: var(--dragon-color); text-shadow: 0 0 30px rgba(59, 130, 246, 0.8); }
+.pred-Tiger { color: var(--tiger-color); text-shadow: 0 0 30px rgba(239, 68, 68, 0.8); }
+.pred-Tie { color: var(--tie-color); text-shadow: 0 0 30px rgba(234, 179, 8, 0.8); }
 
 .confidence {
     background: rgba(255,255,255,0.1);

@@ -78,7 +78,7 @@ class DragonTigerCouncil:
                         'max_tokens': max_tokens,
                         'temperature': 0.7
                     },
-                    timeout=15
+                    timeout=30
                 )
 
                 if response.status_code == 200:
