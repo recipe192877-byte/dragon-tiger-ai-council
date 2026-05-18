@@ -114,7 +114,7 @@ class DragonTigerCouncil:
                         'max_tokens': max_tokens,
                         'temperature': 0.7
                     },
-                    timeout=30
+                    timeout=8
                 )
 
                 if response.status_code == 200:
@@ -207,7 +207,7 @@ class DragonTigerCouncil:
                 "analysis": analysis
             })
             opinions_text += f"--- {member['name']} ({member['role']}) ---\n{analysis}\n\n"
-            time.sleep(0.8)
+            time.sleep(0.5)
 
         # Step 2: Chairman synthesizes consensus
         print("[DT-COUNCIL] Chairman synthesizing consensus...")
