@@ -3,172 +3,465 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dragon Tiger | AI Council</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <title>Dragon Tiger | AI Council v2.0</title>
+    <meta name="description" content="Dragon Tiger AI Council — 4-AI Expert Prediction System with real-time analytics">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
 
+    <!-- Animated Background Blobs -->
+    <div class="blob-1"></div>
+    <div class="blob-2"></div>
+
+    <!-- Floating Accuracy Tab -->
     <div class="accuracy-tab" id="accuracy-tab">
-        Accuracy: 0% <br>
-        <span style="font-size: 0.8rem; color: #94a3b8;">(0/0)</span>
+        Accuracy: 0%<br>
+        <span style="font-size: 0.75rem; color: #94a3b8;">(0/0)</span>
     </div>
 
+    <!-- Header -->
     <div class="header">
-        <h1>Dragon Tiger</h1>
-        <p>Powered exclusively by AI Council Intelligence</p>
+        <h1>🐉 Dragon Tiger 🐅</h1>
+        <p>4-AI Expert Council System</p>
+        <div class="version-badge">V2.0 • SWARM INTELLIGENCE</div>
     </div>
 
     <div class="container">
-        
-        <!-- Input Panel -->
-        <div class="panel">
-            <h2>Add Result to History</h2>
+
+        <!-- ── Input Panel ── -->
+        <div class="panel" style="animation-delay: 0.1s">
+            <h2>ADD RESULT <span id="history-count" style="font-size: 0.8rem; color: var(--text-muted);">Count: 0</span></h2>
             <div class="controls">
-                <button class="btn-dragon" onclick="addResult('Dragon')">Dragon</button>
-                <button class="btn-tiger" onclick="addResult('Tiger')">Tiger</button>
-                <button class="btn-tie" onclick="addResult('Tie')">Tie</button>
-                <button class="btn-undo" onclick="undoHistory()">Undo ↩</button>
-                <button class="btn-clear" onclick="clearHistory()">Clear History</button>
+                <button class="btn-dragon" id="btn-dragon" onclick="addResult('Dragon')">🐉 Dragon</button>
+                <button class="btn-tiger" id="btn-tiger" onclick="addResult('Tiger')">🐅 Tiger</button>
+                <button class="btn-tie" onclick="addResult('Tie')">🤝 Tie</button>
+                <button class="btn-secondary" onclick="undoHistory()">↩ UNDO</button>
+                <button class="btn-secondary" onclick="clearHistory()">🗑 CLEAR ALL</button>
             </div>
         </div>
 
-        <!-- History Panel -->
-        <div class="panel">
-            <h2>Recent History Board <span id="history-count" style="font-size: 0.9rem; float: right; color: #94a3b8;">Count: 0</span></h2>
+        <!-- ── History Board ── -->
+        <div class="panel" style="animation-delay: 0.2s">
+            <h2>LIVE HISTORY BOARD</h2>
             <div class="history-container" id="history-board">
-                <div style="color: #64748b; font-size: 0.9rem;">No history yet. Click buttons above to add.</div>
+                <div style="color: #475569; font-size: 0.85rem;">No history yet — click Dragon or Tiger above.</div>
+            </div>
+
+            <!-- Distribution Bar -->
+            <div class="dist-bar-container" id="dist-section" style="display: none;">
+                <div class="dist-bar">
+                    <div class="dist-dragon" id="dist-d" style="width: 50%"></div>
+                    <div class="dist-tiger" id="dist-t" style="width: 50%"></div>
+                </div>
+                <div class="dist-labels">
+                    <span style="color: var(--dragon);">🐉 <span id="lbl-d">0</span></span>
+                    <span style="color: var(--tiger);"><span id="lbl-t">0</span> 🐅</span>
+                </div>
+            </div>
+
+            <!-- Current Streak -->
+            <div class="streak-bar hidden" id="streak-bar">
+                <span id="streak-icon"></span> <span id="streak-text">—</span>
             </div>
         </div>
 
-        <!-- AI Action Panel -->
-        <div class="panel action-panel">
-            <button class="btn-predict" id="btn-predict" onclick="askAICouncil()">ASK AI COUNCIL</button>
-            
-            <div class="loader" id="loader" style="display: none;"></div>
+        <!-- ── Stats Panel ── -->
+        <div class="panel hidden" id="stats-panel" style="animation-delay: 0.3s">
+            <h2>📊 PERFORMANCE</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Dragon %</div>
+                    <div class="stat-value" id="stat-dpct" style="color: var(--dragon);">0%</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Tiger %</div>
+                    <div class="stat-value" id="stat-tpct" style="color: var(--tiger);">0%</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Accuracy</div>
+                    <div class="stat-value" id="stat-acc" style="color: var(--success);">0%</div>
+                </div>
+            </div>
+
+            <!-- Streak Stats -->
+            <div class="stats-grid" style="margin-top: 0.8rem;">
+                <div class="stat-card">
+                    <div class="stat-label">Win Streak</div>
+                    <div class="stat-value" id="stat-wstreak" style="color: var(--success);">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Lose Streak</div>
+                    <div class="stat-value" id="stat-lstreak" style="color: var(--tiger);">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Alt. Rate</div>
+                    <div class="stat-value" id="stat-altrate" style="color: var(--accent);">0%</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── AI Council Panel ── -->
+        <div class="panel" style="animation-delay: 0.4s">
+            <button class="btn-predict" id="btn-predict" onclick="askAICouncil()">🤖 ASK AI COUNCIL</button>
+
+            <div class="loader hidden" id="loader"></div>
+            <div id="council-status" style="text-align:center; color: var(--text-muted); font-size: 0.85rem; display: none;"></div>
 
             <div class="result-display" id="result-display">
-                <div class="confidence" id="res-conf">Confidence: HIGH</div>
-                <div class="final-prediction" id="res-pred">DRAGON</div>
-                <div class="reasoning" id="res-reason">"Streak pattern strongly favors Dragon continuation."</div>
+                <div class="confidence" id="res-conf">Confidence: —</div>
+                <div class="final-prediction" id="res-pred">—</div>
+                <div class="reasoning" id="res-reason"></div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);" id="res-meta"></div>
+            </div>
+
+            <!-- Expert Opinions -->
+            <div class="council-section hidden" id="opinions-section">
+                <h2 style="font-size: 0.85rem; margin-top: 1rem;">🧠 EXPERT OPINIONS</h2>
+                <div id="opinions-container"></div>
+            </div>
+        </div>
+
+        <!-- ── Prediction Log ── -->
+        <div class="panel hidden" id="log-panel" style="animation-delay: 0.5s">
+            <h2>📋 PREDICTION LOG</h2>
+            <div id="log-container" style="max-height: 200px; overflow-y: auto;"></div>
+        </div>
+
+        <!-- ── Trend Chart ── -->
+        <div class="panel hidden" id="chart-panel" style="animation-delay: 0.6s">
+            <h2>📈 TREND ANALYSIS</h2>
+            <div class="chart-container">
+                <canvas id="trendChart" height="160"></canvas>
             </div>
         </div>
 
     </div>
 
-    <script>
-        // Load initial history
-        fetchHistory();
+<script>
+    let trendChart = null;
 
-        function updateHistoryBoard(history, stats) {
-            const board = document.getElementById('history-board');
-            const count = document.getElementById('history-count');
-            count.textContent = `Count: ${history.length}`;
+    // ── Init ──
+    fetchHistory();
 
-            // Update Accuracy Tab
-            if (stats && stats.total_predictions > 0) {
-                let acc = Math.round((stats.correct_predictions / stats.total_predictions) * 100);
-                document.getElementById('accuracy-tab').innerHTML = `Accuracy: ${acc}% <br><span style="font-size: 0.8rem; color: #94a3b8;">(${stats.correct_predictions}/${stats.total_predictions})</span>`;
-            } else {
-                document.getElementById('accuracy-tab').innerHTML = `Accuracy: 0% <br><span style="font-size: 0.8rem; color: #94a3b8;">(0/0)</span>`;
-            }
+    // ── Update UI ──
+    function updateUI(history, stats, analytics) {
+        updateHistoryBoard(history);
+        updateAccuracy(stats);
+        updateAnalytics(analytics);
+        updateDistribution(analytics);
+        updateStreak(analytics);
+        updatePredictionLog(stats);
+        updateTrendChart(history);
+    }
 
-            if (history.length === 0) {
-                board.innerHTML = '<div style="color: #64748b; font-size: 0.9rem;">No history yet. Click buttons above to add.</div>';
-                return;
-            }
+    function updateHistoryBoard(history) {
+        const board = document.getElementById('history-board');
+        const count = document.getElementById('history-count');
+        count.textContent = `Count: ${history.length}`;
 
-            board.innerHTML = '';
-            history.forEach(res => {
-                const bead = document.createElement('div');
-                let initial = res === 'Dragon' ? 'D' : (res === 'Tiger' ? 'T' : 'Tie');
-                bead.className = `history-bead bead-${initial}`;
-                bead.textContent = initial;
-                board.appendChild(bead);
-            });
-            
-            // Auto scroll to bottom of history
-            board.scrollTop = board.scrollHeight;
+        if (history.length === 0) {
+            board.innerHTML = '<div style="color: #475569; font-size: 0.85rem;">No history yet — click Dragon or Tiger above.</div>';
+            return;
         }
 
-        async function fetchHistory() {
+        board.innerHTML = '';
+        history.forEach(res => {
+            const bead = document.createElement('div');
+            let initial = res === 'Dragon' ? 'D' : (res === 'Tiger' ? 'T' : 'Tie');
+            bead.className = `history-bead bead-${initial}`;
+            bead.textContent = initial;
+            board.appendChild(bead);
+        });
+        board.scrollTop = board.scrollHeight;
+    }
+
+    function updateAccuracy(stats) {
+        if (stats && stats.total_predictions > 0) {
+            const acc = Math.round((stats.correct_predictions / stats.total_predictions) * 100);
+            document.getElementById('accuracy-tab').innerHTML =
+                `Accuracy: ${acc}%<br><span style="font-size: 0.75rem; color: #94a3b8;">(${stats.correct_predictions}/${stats.total_predictions})</span>`;
+            document.getElementById('stat-acc').textContent = acc + '%';
+            document.getElementById('stat-wstreak').textContent = stats.win_streak || 0;
+            document.getElementById('stat-lstreak').textContent = stats.lose_streak || 0;
+        } else {
+            document.getElementById('accuracy-tab').innerHTML =
+                `Accuracy: 0%<br><span style="font-size: 0.75rem; color: #94a3b8;">(0/0)</span>`;
+        }
+    }
+
+    function updateAnalytics(analytics) {
+        if (!analytics || analytics.total === 0) {
+            document.getElementById('stats-panel').classList.add('hidden');
+            return;
+        }
+        document.getElementById('stats-panel').classList.remove('hidden');
+        document.getElementById('stat-dpct').textContent = analytics.dragon_pct + '%';
+        document.getElementById('stat-tpct').textContent = analytics.tiger_pct + '%';
+        document.getElementById('stat-altrate').textContent = analytics.alternation_rate + '%';
+    }
+
+    function updateDistribution(analytics) {
+        if (!analytics || analytics.total === 0) {
+            document.getElementById('dist-section').style.display = 'none';
+            return;
+        }
+        document.getElementById('dist-section').style.display = 'block';
+        const total = analytics.dragon_count + analytics.tiger_count || 1;
+        const dp = Math.round(analytics.dragon_count / total * 100);
+        const tp = 100 - dp;
+        document.getElementById('dist-d').style.width = dp + '%';
+        document.getElementById('dist-t').style.width = tp + '%';
+        document.getElementById('lbl-d').textContent = `${analytics.dragon_count} (${dp}%)`;
+        document.getElementById('lbl-t').textContent = `${analytics.tiger_count} (${tp}%)`;
+    }
+
+    function updateStreak(analytics) {
+        if (!analytics || !analytics.current_streak || !analytics.current_streak.type) {
+            document.getElementById('streak-bar').classList.add('hidden');
+            return;
+        }
+        const s = analytics.current_streak;
+        const bar = document.getElementById('streak-bar');
+        bar.classList.remove('hidden', 'streak-dragon', 'streak-tiger');
+        if (s.type === 'Dragon') {
+            bar.classList.add('streak-dragon');
+            document.getElementById('streak-icon').textContent = '🐉';
+        } else {
+            bar.classList.add('streak-tiger');
+            document.getElementById('streak-icon').textContent = '🐅';
+        }
+        document.getElementById('streak-text').textContent = `${s.type} streak: ${s.count} round${s.count > 1 ? 's' : ''}`;
+    }
+
+    function updatePredictionLog(stats) {
+        const log = stats.prediction_log;
+        if (!log || log.length === 0) {
+            document.getElementById('log-panel').classList.add('hidden');
+            return;
+        }
+        document.getElementById('log-panel').classList.remove('hidden');
+        const container = document.getElementById('log-container');
+        container.innerHTML = '';
+        // Reverse to show newest first
+        [...log].reverse().forEach(entry => {
+            const div = document.createElement('div');
+            div.className = `log-item ${entry.correct ? 'log-pass' : 'log-fail'}`;
+            div.innerHTML = `
+                <span>${entry.time} — Predicted: <strong>${entry.predicted}</strong> → Actual: <strong>${entry.actual}</strong></span>
+                <span class="${entry.correct ? 'log-status-pass' : 'log-status-fail'}">${entry.correct ? '✅ PASS' : '❌ FAIL'}</span>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    function updateTrendChart(history) {
+        if (!history || history.length < 5) {
+            document.getElementById('chart-panel').classList.add('hidden');
+            return;
+        }
+        document.getElementById('chart-panel').classList.remove('hidden');
+        const last30 = history.slice(-30);
+        const labels = last30.map((_, i) => `#${history.length - last30.length + i + 1}`);
+        const values = last30.map(r => r === 'Dragon' ? 1 : (r === 'Tiger' ? -1 : 0));
+
+        const ctx = document.getElementById('trendChart').getContext('2d');
+        if (trendChart) trendChart.destroy();
+
+        Chart.defaults.color = '#94a3b8';
+        trendChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'D/T Trend',
+                    data: values,
+                    backgroundColor: values.map(v => v > 0 ? 'rgba(59,130,246,0.7)' : (v < 0 ? 'rgba(239,68,68,0.7)' : 'rgba(234,179,8,0.7)')),
+                    borderWidth: 0,
+                    borderRadius: 4,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: {
+                        min: -1.5, max: 1.5,
+                        ticks: {
+                            callback: v => v === 1 ? '🐉' : (v === -1 ? '🐅' : ''),
+                            stepSize: 1
+                        },
+                        grid: { color: 'rgba(255,255,255,0.05)' }
+                    },
+                    x: {
+                        ticks: { display: false },
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    }
+
+    // ── API Calls ──
+    async function fetchHistory() {
+        try {
             const res = await fetch('/api/history');
             const data = await res.json();
-            updateHistoryBoard(data.history, data.stats);
-        }
+            updateUI(data.history, data.stats, data.analytics);
+        } catch(e) { console.error('Fetch history error:', e); }
+    }
 
-        async function addResult(result) {
+    async function addResult(result) {
+        // Disable buttons briefly
+        ['btn-dragon', 'btn-tiger'].forEach(id => document.getElementById(id).disabled = true);
+        try {
             const res = await fetch('/api/history', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'add', result: result })
             });
             const data = await res.json();
-            updateHistoryBoard(data.history, data.stats);
-            
-            // Hide previous prediction
+            updateUI(data.history, data.stats, data.analytics);
             document.getElementById('result-display').style.display = 'none';
+            document.getElementById('opinions-section').classList.add('hidden');
+        } catch(e) { console.error('Add result error:', e); }
+        ['btn-dragon', 'btn-tiger'].forEach(id => document.getElementById(id).disabled = false);
+    }
 
-            // Auto-predict after every result once we have 15+ results
-            if (data.history.length >= 15) {
-                askAICouncil();
-            }
-        }
-
-        async function undoHistory() {
+    async function undoHistory() {
+        try {
             const res = await fetch('/api/history', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'undo' })
             });
             const data = await res.json();
-            updateHistoryBoard(data.history, data.stats);
+            updateUI(data.history, data.stats, data.analytics);
             document.getElementById('result-display').style.display = 'none';
-        }
+        } catch(e) { console.error('Undo error:', e); }
+    }
 
-        async function clearHistory() {
+    async function clearHistory() {
+        if (!confirm('Clear all history and stats?')) return;
+        try {
             const res = await fetch('/api/history', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'clear' })
             });
             const data = await res.json();
-            updateHistoryBoard(data.history, data.stats);
+            updateUI(data.history, data.stats, data.analytics);
             document.getElementById('result-display').style.display = 'none';
+            document.getElementById('opinions-section').classList.add('hidden');
+            document.getElementById('log-panel').classList.add('hidden');
+        } catch(e) { console.error('Clear error:', e); }
+    }
+
+    async function askAICouncil() {
+        const btn = document.getElementById('btn-predict');
+        const loader = document.getElementById('loader');
+        const resultDisplay = document.getElementById('result-display');
+        const statusDiv = document.getElementById('council-status');
+
+        btn.disabled = true;
+        btn.textContent = "🧠 COUNCIL IS MEETING...";
+        resultDisplay.style.display = 'none';
+        document.getElementById('opinions-section').classList.add('hidden');
+        loader.classList.remove('hidden');
+
+        // Animated council status
+        const statuses = [
+            'StreakBot analyzing momentum...',
+            'ZigzagAI scanning patterns...',
+            'FreqMaster counting frequencies...',
+            'RiskGuard assessing risk...',
+            'Chairman building consensus...'
+        ];
+        let si = 0;
+        statusDiv.style.display = 'block';
+        statusDiv.textContent = statuses[0];
+        const statusInterval = setInterval(() => {
+            si = (si + 1) % statuses.length;
+            statusDiv.textContent = statuses[si];
+        }, 3000);
+
+        try {
+            const res = await fetch('/api/predict');
+            const data = await res.json();
+            clearInterval(statusInterval);
+            statusDiv.style.display = 'none';
+            loader.classList.add('hidden');
+
+            // Slot machine animation for prediction
+            const predEl = document.getElementById('res-pred');
+            const options = ['🐉 Dragon', '🐅 Tiger', '🐉 Dragon', '🐅 Tiger'];
+            let rolls = 0;
+            const rollInterval = setInterval(() => {
+                predEl.textContent = options[rolls % options.length];
+                predEl.className = `final-prediction pred-${rolls % 2 === 0 ? 'Dragon' : 'Tiger'}`;
+                rolls++;
+                if (rolls > 12) {
+                    clearInterval(rollInterval);
+                    // Final result
+                    const icon = data.prediction === 'Dragon' ? '🐉' : (data.prediction === 'Tiger' ? '🐅' : '🤝');
+                    predEl.textContent = `${icon} ${data.prediction}`;
+                    predEl.className = `final-prediction pred-${data.prediction}`;
+                    document.getElementById('res-conf').textContent = `Confidence: ${data.confidence}`;
+                    document.getElementById('res-reason').textContent = `"${data.reasoning}"`;
+                    document.getElementById('res-meta').textContent =
+                        `${data.council_members || 0} experts responded • Meeting: ${data.duration || 0}s`;
+
+                    // Play sound on HIGH confidence
+                    if (data.confidence === 'HIGH') playAlert();
+
+                    // Show opinions
+                    if (data.opinions && data.opinions.length > 0) {
+                        const opinionsDiv = document.getElementById('opinions-container');
+                        opinionsDiv.innerHTML = '';
+                        data.opinions.forEach(op => {
+                            const card = document.createElement('div');
+                            card.className = 'opinion-card';
+                            card.innerHTML = `
+                                <div class="opinion-name">${op.name} — ${op.role || ''}</div>
+                                <div class="opinion-text">${op.analysis.substring(0, 300)}${op.analysis.length > 300 ? '...' : ''}</div>
+                            `;
+                            opinionsDiv.appendChild(card);
+                        });
+                        document.getElementById('opinions-section').classList.remove('hidden');
+                    }
+                }
+            }, 60);
+
+            resultDisplay.style.display = 'flex';
+
+        } catch (err) {
+            clearInterval(statusInterval);
+            statusDiv.style.display = 'none';
+            loader.classList.add('hidden');
+            alert("Error connecting to AI Council server.");
+            console.error(err);
         }
 
-        async function askAICouncil() {
-            const btn = document.getElementById('btn-predict');
-            const loader = document.getElementById('loader');
-            const resultDisplay = document.getElementById('result-display');
+        btn.disabled = false;
+        btn.textContent = "🤖 ASK AI COUNCIL";
+    }
 
-            // UI State loading
-            btn.disabled = true;
-            btn.textContent = "COUNCIL IS THINKING...";
-            resultDisplay.style.display = 'none';
-            loader.style.display = 'inline-block';
-
-            try {
-                const res = await fetch('/api/predict');
-                const data = await res.json();
-
-                // Update UI State success
-                document.getElementById('res-pred').textContent = data.prediction;
-                document.getElementById('res-pred').className = `final-prediction pred-${data.prediction}`;
-                
-                document.getElementById('res-conf').textContent = `Confidence: ${data.confidence}`;
-                document.getElementById('res-reason').textContent = `"${data.reasoning}"`;
-
-                loader.style.display = 'none';
-                resultDisplay.style.display = 'flex';
-            } catch (e) {
-                alert("Error connecting to AI Council.");
-                loader.style.display = 'none';
-            }
-
-            btn.disabled = false;
-            btn.textContent = "ASK AI COUNCIL";
-        }
-    </script>
+    function playAlert() {
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            [600, 800, 1000].forEach((f, i) => {
+                const o = ctx.createOscillator();
+                const g = ctx.createGain();
+                o.connect(g); g.connect(ctx.destination);
+                o.frequency.value = f;
+                g.gain.value = 0.08;
+                o.start(ctx.currentTime + i * 0.15);
+                o.stop(ctx.currentTime + i * 0.15 + 0.12);
+            });
+        } catch(e) {}
+    }
+</script>
 </body>
 </html>
