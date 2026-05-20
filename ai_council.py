@@ -8,6 +8,7 @@ import json
 import re
 import time
 import requests
+import concurrent.futures
 from datetime import datetime
 from dotenv import load_dotenv
 
@@ -15,17 +16,13 @@ load_dotenv()
 
 OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions'
 
-# Top free models verified on OpenRouter (Rating 3.8+) — May 2026
+# Curated active free models on OpenRouter
 MODELS_TO_TRY = [
-    'nousresearch/hermes-3-llama-3.1-405b:free',
-    'meta-llama/llama-3.3-70b-instruct:free',
-    'nvidia/nemotron-3-super-120b-a12b:free',
-    'deepseek/deepseek-r1:free',
-    'deepseek/deepseek-chat:free',
-    'google/gemma-4-31b-it:free',
-    'qwen/qwen3-next-80b-a3b-instruct:free',
-    'deepseek/deepseek-v4-flash:free',
-    'nvidia/nemotron-3-nano-30b-a3b:free',
+    'openrouter/free',                      # Smart auto-routing for free tier
+    'google/gemma-2-9b-it:free',            # Google Gemma 2 9B (very fast and smart)
+    'meta-llama/llama-3-8b-instruct:free',   # Meta Llama 3 8B
+    'qwen/qwen-2.5-72b-instruct:free',       # Qwen 2.5 72B
+    'deepseek/deepseek-r1:free',            # DeepSeek R1 reasoning
 ]
 
 # 4 Council Members — each AI has a unique analytical personality
@@ -54,7 +51,7 @@ COUNCIL_MEMBERS = [
 
 CHAIRMAN_PROMPT = """You are the Chairman of the Dragon Tiger AI Council.
 
-Game History (oldest → newest, last result on right):
+Game History (oldest -> newest, last result on right):
 {history}
 
 Quick Stats:
@@ -88,7 +85,7 @@ class DragonTigerCouncil:
             masked = self.api_key[:8] + '...' + self.api_key[-4:]
             print(f"[DT-COUNCIL] API Key loaded: {masked}")
         else:
-            print("[DT-COUNCIL] ⚠️ WARNING: No OPENROUTER_API_KEY! Set in Render Dashboard → Environment.")
+            print("[DT-COUNCIL] ⚠️ WARNING: No OPENROUTER_API_KEY! Set in Render Dashboard -> Environment.")
 
     def _call_ai(self, system_prompt, user_prompt, max_tokens=250):
         """Call AI models with multi-model fallback."""
@@ -114,7 +111,7 @@ class DragonTigerCouncil:
                         'max_tokens': max_tokens,
                         'temperature': 0.7
                     },
-                    timeout=8
+                    timeout=5
                 )
 
                 if response.status_code == 200:
@@ -124,6 +121,10 @@ class DragonTigerCouncil:
                         return content
                 else:
                     print(f"[DT-COUNCIL] {model} failed ({response.status_code}). Trying fallback...")
+                    # If it's auth/quota error, don't keep trying other models
+                    if response.status_code in [401, 402, 403]:
+                        print(f"[DT-COUNCIL] Critical API key error ({response.status_code}). Aborting fallbacks.")
+                        break
             except Exception as e:
                 print(f"[DT-COUNCIL] Error calling {model}: {e}")
         
@@ -185,29 +186,45 @@ class DragonTigerCouncil:
             }
 
         meeting_start = time.time()
-        history_str = " → ".join(history[-30:])  # Last 30 for context
+        history_str = " -> ".join(history[-30:])  # Last 30 for context
         d_count = history.count('Dragon')
         t_count = history.count('Tiger')
-        last5 = " → ".join(history[-5:]) if len(history) >= 5 else " → ".join(history)
+        last5 = " -> ".join(history[-5:]) if len(history) >= 5 else " -> ".join(history)
         
-        user_prompt = f"Recent History (oldest → newest): {history_str}\n\nDragon: {d_count} | Tiger: {t_count} | Last 5: {last5}\n\nWhat is your analysis for the next round?"
+        user_prompt = f"Recent History (oldest -> newest): {history_str}\n\nDragon: {d_count} | Tiger: {t_count} | Last 5: {last5}\n\nWhat is your analysis for the next round?"
 
-        # Step 1: Gather individual expert opinions
-        opinions = []
-        opinions_text = ""
+        # Step 1: Gather individual expert opinions in parallel
+        opinions = [None] * len(COUNCIL_MEMBERS)
         
-        for member in COUNCIL_MEMBERS:
+        def run_member(index, member):
             print(f"[DT-COUNCIL] {member['name']} analyzing...")
-            response = self._call_ai(member['style'], user_prompt, max_tokens=150)
-            
-            analysis = response.strip() if response else f"[{member['name']} could not respond]"
-            opinions.append({
+            try:
+                response = self._call_ai(member['style'], user_prompt, max_tokens=150)
+                analysis = response.strip() if response else f"[{member['name']} could not respond]"
+            except Exception as e:
+                analysis = f"[{member['name']} failed: {e}]"
+            return index, {
                 "name": member['name'],
                 "role": member['role'],
                 "analysis": analysis
-            })
-            opinions_text += f"--- {member['name']} ({member['role']}) ---\n{analysis}\n\n"
-            time.sleep(0.5)
+            }
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+            futures = [executor.submit(run_member, idx, m) for idx, m in enumerate(COUNCIL_MEMBERS)]
+            for future in concurrent.futures.as_completed(futures):
+                try:
+                    idx, opinion = future.result()
+                    opinions[idx] = opinion
+                except Exception as e:
+                    print(f"[DT-COUNCIL] Expert execution failed: {e}")
+
+        # Construct opinions text block for chairman
+        opinions_text = ""
+        valid_opinions = []
+        for o in opinions:
+            if o:
+                opinions_text += f"--- {o['name']} ({o['role']}) ---\n{o['analysis']}\n\n"
+                valid_opinions.append(o)
 
         # Step 2: Chairman synthesizes consensus
         print("[DT-COUNCIL] Chairman synthesizing consensus...")
@@ -232,8 +249,8 @@ class DragonTigerCouncil:
             "prediction": fallback_pred,
             "confidence": "LOW",
             "reasoning": "AI response unclear, pattern-based fallback used.",
-            "opinions": opinions,
-            "council_members": len([o for o in opinions if '[' not in o['analysis'][:5]]),
+            "opinions": valid_opinions,
+            "council_members": len([o for o in valid_opinions if '[' not in o['analysis'][:5]]),
             "duration": 0
         }
         
@@ -274,5 +291,5 @@ class DragonTigerCouncil:
                         result["reasoning"] = "Extracted from raw AI context (Tiger dominant)."
 
         result["duration"] = round(time.time() - meeting_start, 1)
-        print(f"[DT-COUNCIL] Meeting complete in {result['duration']}s → {result['prediction']} ({result['confidence']})")
+        print(f"[DT-COUNCIL] Meeting complete in {result['duration']}s -> {result['prediction']} ({result['confidence']})")
         return result
