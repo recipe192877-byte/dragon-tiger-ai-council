@@ -192,6 +192,9 @@
 
     // ── Update UI ──
     function updateUI(history, stats, analytics) {
+        if (history) {
+            localStorage.setItem('dt-game-history', JSON.stringify(history));
+        }
         updateHistoryBoard(history);
         updateAccuracy(stats);
         updateAnalytics(analytics);
@@ -354,8 +357,31 @@
         try {
             const res = await fetch('/api/history');
             const data = await res.json();
+            
+            // Check if server history is empty but localStorage has history (survives server spin-downs)
+            const savedHistoryStr = localStorage.getItem('dt-game-history');
+            if ((!data.history || data.history.length === 0) && savedHistoryStr) {
+                const savedHistory = JSON.parse(savedHistoryStr);
+                if (savedHistory && savedHistory.length > 0) {
+                    await restoreHistory(savedHistory);
+                    return;
+                }
+            }
+            
             updateUI(data.history, data.stats, data.analytics);
         } catch(e) { console.error('Fetch history error:', e); }
+    }
+
+    async function restoreHistory(savedHistory) {
+        try {
+            const res = await fetch('/api/history', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'restore', history: savedHistory })
+            });
+            const data = await res.json();
+            updateUI(data.history, data.stats, data.analytics);
+        } catch(e) { console.error('Restore history error:', e); }
     }
 
     async function addResult(result) {
@@ -397,6 +423,7 @@
                 body: JSON.stringify({ action: 'clear' })
             });
             const data = await res.json();
+            localStorage.removeItem('dt-game-history'); // Clear local storage too!
             updateUI(data.history, data.stats, data.analytics);
             document.getElementById('result-display').style.display = 'none';
             document.getElementById('opinions-section').classList.add('hidden');

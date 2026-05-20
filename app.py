@@ -120,6 +120,7 @@ def _compute_analytics(history):
 
 
 # ── Initialize state from files ──
+# Global variables as initial fallback
 history = _load_history()
 stats = _load_stats()
 
@@ -131,7 +132,9 @@ def index():
 
 @app.route('/api/history', methods=['GET', 'POST'])
 def manage_history():
-    global history, stats
+    current_history = _load_history()
+    current_stats = _load_stats()
+
     if request.method == 'POST':
         data = request.json
         action = data.get('action')
@@ -140,60 +143,71 @@ def manage_history():
             result = data.get('result')
             if result in ['Dragon', 'Tiger', 'Tie']:
                 # Evaluate last prediction
-                if stats['last_prediction'] and stats['last_prediction'] not in ('Wait', 'Error', 'N/A'):
-                    stats['total_predictions'] += 1
-                    is_correct = (stats['last_prediction'] == result)
+                last_pred = current_stats.get('last_prediction')
+                if last_pred and last_pred not in ('Wait', 'Error', 'N/A'):
+                    current_stats['total_predictions'] += 1
+                    is_correct = (last_pred == result)
                     if is_correct:
-                        stats['correct_predictions'] += 1
-                        stats['win_streak'] += 1
-                        stats['lose_streak'] = 0
-                        if stats['win_streak'] > stats.get('max_win_streak', 0):
-                            stats['max_win_streak'] = stats['win_streak']
+                        current_stats['correct_predictions'] += 1
+                        current_stats['win_streak'] += 1
+                        current_stats['lose_streak'] = 0
+                        if current_stats['win_streak'] > current_stats.get('max_win_streak', 0):
+                            current_stats['max_win_streak'] = current_stats['win_streak']
                     else:
-                        stats['lose_streak'] += 1
-                        stats['win_streak'] = 0
+                        current_stats['lose_streak'] += 1
+                        current_stats['win_streak'] = 0
 
                     # Log prediction result
                     log_entry = {
-                        "predicted": stats['last_prediction'],
+                        "predicted": last_pred,
                         "actual": result,
                         "correct": is_correct,
                         "time": datetime.now().strftime('%H:%M:%S')
                     }
-                    stats.setdefault('prediction_log', []).append(log_entry)
+                    current_stats.setdefault('prediction_log', []).append(log_entry)
                     # Keep last 50
-                    if len(stats['prediction_log']) > 50:
-                        stats['prediction_log'] = stats['prediction_log'][-50:]
+                    if len(current_stats['prediction_log']) > 50:
+                        current_stats['prediction_log'] = current_stats['prediction_log'][-50:]
 
-                stats['last_prediction'] = None
-                history.append(result)
-                _save_history(history)
-                _save_stats(stats)
+                current_stats['last_prediction'] = None
+                current_history.append(result)
+                _save_history(current_history)
+                _save_stats(current_stats)
 
         elif action == 'undo':
-            if history:
-                history.pop()
-                stats['last_prediction'] = None
-                _save_history(history)
-                _save_stats(stats)
+            if current_history:
+                current_history.pop()
+                current_stats['last_prediction'] = None
+                _save_history(current_history)
+                _save_stats(current_stats)
 
         elif action == 'clear':
-            history = []
-            stats = _default_stats()
-            _save_history(history)
-            _save_stats(stats)
+            current_history = []
+            current_stats = _default_stats()
+            _save_history(current_history)
+            _save_stats(current_stats)
 
-        analytics = _compute_analytics(history)
-        return jsonify({"status": "success", "history": history, "stats": stats, "analytics": analytics})
+        elif action == 'restore':
+            restored_history = data.get('history', [])
+            if isinstance(restored_history, list):
+                current_history = restored_history
+                current_stats = _default_stats()
+                _save_history(current_history)
+                _save_stats(current_stats)
 
-    analytics = _compute_analytics(history)
-    return jsonify({"history": history, "stats": stats, "analytics": analytics})
+        analytics = _compute_analytics(current_history)
+        return jsonify({"status": "success", "history": current_history, "stats": current_stats, "analytics": analytics})
+
+    analytics = _compute_analytics(current_history)
+    return jsonify({"history": current_history, "stats": current_stats, "analytics": analytics})
 
 
 @app.route('/api/predict', methods=['GET'])
 def get_prediction():
-    global stats
-    if not history:
+    current_history = _load_history()
+    current_stats = _load_stats()
+
+    if not current_history:
         return jsonify({
             "prediction": "N/A",
             "confidence": "-",
@@ -203,9 +217,9 @@ def get_prediction():
             "duration": 0
         })
 
-    prediction_data = council.get_prediction(history[-100:])
-    stats['last_prediction'] = prediction_data.get('prediction')
-    _save_stats(stats)
+    prediction_data = council.get_prediction(current_history[-100:])
+    current_stats['last_prediction'] = prediction_data.get('prediction')
+    _save_stats(current_stats)
 
     return jsonify(prediction_data)
 
@@ -213,13 +227,15 @@ def get_prediction():
 @app.route('/api/health')
 def health():
     """Health check endpoint for uptime monitoring."""
+    current_history = _load_history()
+    current_stats = _load_stats()
     return jsonify({
         "status": "ok",
         "service": "Dragon Tiger AI Council v2.0",
-        "history_count": len(history),
-        "predictions_made": stats.get('total_predictions', 0),
+        "history_count": len(current_history),
+        "predictions_made": current_stats.get('total_predictions', 0),
         "accuracy_pct": round(
-            stats.get('correct_predictions', 0) / max(stats.get('total_predictions', 1), 1) * 100, 1
+            current_stats.get('correct_predictions', 0) / max(current_stats.get('total_predictions', 1), 1) * 100, 1
         ),
         "api_key_set": bool(council.api_key),
         "uptime": int(time.time())
@@ -229,10 +245,12 @@ def health():
 @app.route('/api/stats')
 def get_stats():
     """Return detailed analytics."""
-    analytics = _compute_analytics(history)
+    current_history = _load_history()
+    current_stats = _load_stats()
+    analytics = _compute_analytics(current_history)
     return jsonify({
         "status": "success",
-        "stats": stats,
+        "stats": current_stats,
         "analytics": analytics
     })
 
