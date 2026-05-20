@@ -11,6 +11,7 @@
     --tiger: #ef4444;
     --tiger-glow: rgba(239, 68, 68, 0.5);
     --tie: #eab308;
+    --tie-glow: rgba(234, 179, 8, 0.5);
     --accent: #8b5cf6;
     --accent-glow: rgba(139, 92, 246, 0.5);
     --success: #10b981;
@@ -245,7 +246,7 @@ button:disabled {
 }
 .bead-D { background: var(--dragon); box-shadow: 0 0 12px var(--dragon-glow); }
 .bead-T { background: var(--tiger); box-shadow: 0 0 12px var(--tiger-glow); }
-.bead-Tie { background: var(--tie); box-shadow: 0 0 12px rgba(234, 179, 8, 0.5); font-size: 0.7rem; }
+.bead-Tie { background: var(--tie); box-shadow: 0 0 12px var(--tie-glow); font-size: 0.7rem; }
 
 /* ── Stats Grid ── */
 .stats-grid {
@@ -317,7 +318,7 @@ button:disabled {
 }
 .pred-Dragon { color: var(--dragon); text-shadow: 0 0 40px var(--dragon-glow); }
 .pred-Tiger { color: var(--tiger); text-shadow: 0 0 40px var(--tiger-glow); }
-.pred-Tie { color: var(--tie); text-shadow: 0 0 40px rgba(234, 179, 8, 0.8); }
+.pred-Tie { color: var(--tie); text-shadow: 0 0 40px var(--tie-glow); }
 .pred-Wait, .pred-Error, .pred-N\/A { color: var(--text-muted); }
 
 .confidence {

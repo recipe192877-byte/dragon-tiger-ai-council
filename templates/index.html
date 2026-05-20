@@ -574,6 +574,7 @@
             document.getElementById('tiger-custom').value = color;
         } else if (target === 'tie') {
             root.style.setProperty('--tie', color);
+            root.style.setProperty('--tie-glow', `rgba(${rgb}, 0.5)`);
             document.getElementById('btn-tie').style.background = `linear-gradient(135deg, ${color}, ${shadeColor(color, -20)})`;
             document.getElementById('btn-tie').style.boxShadow = `0 4px 15px rgba(${rgb}, 0.3)`;
             document.getElementById('tie-custom').value = color;
