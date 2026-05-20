@@ -459,6 +459,101 @@ canvas {
 
 .hidden { display: none !important; }
 
+/* ── Color Customizer ── */
+.color-customizer {
+    margin-top: 1rem;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.color-customizer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.65rem 1rem;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    user-select: none;
+    transition: background 0.2s;
+}
+.color-customizer-header:hover {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.color-panel {
+    padding: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    animation: fadeUp 0.3s ease-out;
+}
+
+.color-row {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.color-row label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    min-width: 72px;
+    letter-spacing: 0.5px;
+}
+
+.color-swatches {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.swatch {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+.swatch:hover {
+    transform: scale(1.2);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+.swatch.active {
+    border-color: white;
+    transform: scale(1.15);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
+}
+
+.color-picker-input {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    background: none;
+    cursor: pointer;
+    padding: 0;
+    overflow: hidden;
+    flex-shrink: 0;
+    transition: transform 0.2s;
+}
+.color-picker-input:hover {
+    transform: scale(1.2);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+.color-picker-input::-webkit-color-swatch-wrapper { padding: 0; }
+.color-picker-input::-webkit-color-swatch { border: none; border-radius: 50%; }
+
 /* ── Mobile ── */
 @media (max-width: 600px) {
     body { padding: 1rem; }
@@ -469,4 +564,6 @@ canvas {
     .stat-value { font-size: 1.1rem; }
     .final-prediction { font-size: 2.5rem; }
     .accuracy-tab { font-size: 0.8rem; padding: 0.4rem 0.8rem; }
+    .color-row { flex-wrap: wrap; }
+    .color-row label { min-width: 60px; }
 }
