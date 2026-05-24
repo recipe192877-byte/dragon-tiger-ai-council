@@ -1,2 +1,12 @@
-.env
+﻿.env
 __pycache__/
+*.pyc
+*.pyo
+dt_history.json
+dt_stats.json
+history.json
+stats.json
+*.log
+.DS_Store
+venv/
+.venv/

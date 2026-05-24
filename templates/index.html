@@ -1,624 +1,439 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dragon Tiger | AI Council v2.0</title>
-    <meta name="description" content="Dragon Tiger AI Council — 4-AI Expert Prediction System with real-time analytics">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>Dragon Tiger | AI Council v3.0</title>
+    <meta name="description" content="Dragon Tiger AI Council - Gemini-powered 4-AI Expert Prediction System with real-time analytics">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
-
-    <!-- Animated Background Blobs -->
     <div class="blob-1"></div>
     <div class="blob-2"></div>
-
-    <!-- Floating Accuracy Tab -->
-    <div class="accuracy-tab" id="accuracy-tab">
-        Accuracy: 0%<br>
-        <span style="font-size: 0.75rem; color: #94a3b8;">(0/0)</span>
-    </div>
-
-    <!-- Header -->
-    <div class="header">
-        <h1>🐉 Dragon Tiger 🐅</h1>
-        <p>4-AI Expert Council System</p>
-        <div class="version-badge">V2.0 • SWARM INTELLIGENCE</div>
-    </div>
-
-    <div class="container">
-
-        <!-- ── Input Panel ── -->
-        <div class="panel" style="animation-delay: 0.1s">
-            <h2>ADD RESULT <span id="history-count" style="font-size: 0.8rem; color: var(--text-muted);">Count: 0</span></h2>
-            <div class="controls">
-                <button class="btn-dragon" id="btn-dragon" onclick="addResult('Dragon')">🐉 Dragon</button>
-                <button class="btn-tiger" id="btn-tiger" onclick="addResult('Tiger')">🐅 Tiger</button>
-                <button class="btn-tie" id="btn-tie" onclick="addResult('Tie')">🤝 Tie</button>
-                <button class="btn-secondary" onclick="undoHistory()">↩ UNDO</button>
-                <button class="btn-secondary" onclick="clearHistory()">🗑 CLEAR ALL</button>
+    <div class="accuracy-tab" id="accuracy-tab">Accuracy: 0%<br><span style="font-size:0.75rem;color:#94a3b8;">(0/0)</span></div>
+    <div class="modal-overlay hidden" id="confirm-modal">
+        <div class="modal-box">
+            <div class="modal-icon">&#x26A0;&#xFE0F;</div>
+            <div class="modal-title">Clear All History?</div>
+            <div class="modal-msg">Saari history aur stats delete ho jayenge.</div>
+            <div class="modal-btns">
+                <button class="modal-cancel" onclick="closeModal()">Cancel</button>
+                <button class="modal-confirm" onclick="confirmClear()">Clear All</button>
             </div>
-
-            <!-- ── Color Customizer ── -->
-            <div class="color-customizer" id="color-customizer">
+        </div>
+    </div>
+    <div class="header">
+        <h1>&#x1F409; Dragon Tiger &#x1F405;</h1>
+        <p>4-AI Expert Council System</p>
+        <div class="version-badge">V3.0 &bull; GEMINI POWERED</div>
+    </div>
+    <div class="error-banner hidden" id="init-error">&#x26A0;&#xFE0F; Server se connect nahi ho pa raha. Page reload karo.</div>
+    <div class="container">
+        <div class="panel" style="animation-delay:0.1s">
+            <h2>ADD RESULT <span id="history-count" style="font-size:0.8rem;color:var(--text-muted);">Count: 0</span></h2>
+            <div class="controls">
+                <button class="btn-dragon" id="btn-dragon" onclick="addResult('Dragon')">&#x1F409; Dragon</button>
+                <button class="btn-tiger" id="btn-tiger" onclick="addResult('Tiger')">&#x1F405; Tiger</button>
+                <button class="btn-tie" id="btn-tie" onclick="addResult('Tie')">&#x1F91D; Tie</button>
+                <button class="btn-secondary" id="btn-undo" onclick="undoHistory()">&#x21A9;&#xFE0F; UNDO</button>
+                <button class="btn-secondary btn-clear" onclick="clearHistory()">&#x1F5D1;&#xFE0F; CLEAR ALL</button>
+            </div>
+            <div class="color-customizer">
                 <div class="color-customizer-header" onclick="toggleColorPanel()">
-                    <span>🎨 Colors Customize</span>
-                    <span id="color-chevron" style="transition: transform 0.3s;">▼</span>
+                    <span>&#x1F3A8; Colors Customize</span>
+                    <span id="color-chevron" style="transition:transform 0.3s;">&#x276F;</span>
                 </div>
-                <div class="color-panel" id="color-panel" style="display: none;">
+                <div class="color-panel" id="color-panel" style="display:none;">
                     <div class="color-row">
-                        <label>🐉 Dragon</label>
+                        <label>&#x1F409; Dragon</label>
                         <div class="color-swatches" id="dragon-swatches">
                             <div class="swatch active" data-color="#3b82f6" data-target="dragon" style="background:#3b82f6" onclick="applyColor('dragon','#3b82f6',this)"></div>
                             <div class="swatch" data-color="#06b6d4" data-target="dragon" style="background:#06b6d4" onclick="applyColor('dragon','#06b6d4',this)"></div>
                             <div class="swatch" data-color="#8b5cf6" data-target="dragon" style="background:#8b5cf6" onclick="applyColor('dragon','#8b5cf6',this)"></div>
                             <div class="swatch" data-color="#10b981" data-target="dragon" style="background:#10b981" onclick="applyColor('dragon','#10b981',this)"></div>
                             <div class="swatch" data-color="#f59e0b" data-target="dragon" style="background:#f59e0b" onclick="applyColor('dragon','#f59e0b',this)"></div>
-                            <input type="color" class="color-picker-input" id="dragon-custom" value="#3b82f6" title="Custom color" onchange="applyColorCustom('dragon', this.value)">
+                            <input type="color" class="color-picker-input" id="dragon-custom" value="#3b82f6" onchange="applyColorCustom('dragon',this.value)">
                         </div>
                     </div>
                     <div class="color-row">
-                        <label>🐅 Tiger</label>
+                        <label>&#x1F405; Tiger</label>
                         <div class="color-swatches" id="tiger-swatches">
                             <div class="swatch" data-color="#ef4444" data-target="tiger" style="background:#ef4444" onclick="applyColor('tiger','#ef4444',this)"></div>
                             <div class="swatch active" data-color="#f97316" data-target="tiger" style="background:#f97316" onclick="applyColor('tiger','#f97316',this)"></div>
                             <div class="swatch" data-color="#ec4899" data-target="tiger" style="background:#ec4899" onclick="applyColor('tiger','#ec4899',this)"></div>
                             <div class="swatch" data-color="#dc2626" data-target="tiger" style="background:#dc2626" onclick="applyColor('tiger','#dc2626',this)"></div>
                             <div class="swatch" data-color="#a855f7" data-target="tiger" style="background:#a855f7" onclick="applyColor('tiger','#a855f7',this)"></div>
-                            <input type="color" class="color-picker-input" id="tiger-custom" value="#ef4444" title="Custom color" onchange="applyColorCustom('tiger', this.value)">
+                            <input type="color" class="color-picker-input" id="tiger-custom" value="#f97316" onchange="applyColorCustom('tiger',this.value)">
                         </div>
                     </div>
                     <div class="color-row">
-                        <label>🤝 Tie</label>
+                        <label>&#x1F91D; Tie</label>
                         <div class="color-swatches" id="tie-swatches">
                             <div class="swatch active" data-color="#eab308" data-target="tie" style="background:#eab308" onclick="applyColor('tie','#eab308',this)"></div>
                             <div class="swatch" data-color="#22c55e" data-target="tie" style="background:#22c55e" onclick="applyColor('tie','#22c55e',this)"></div>
                             <div class="swatch" data-color="#14b8a6" data-target="tie" style="background:#14b8a6" onclick="applyColor('tie','#14b8a6',this)"></div>
                             <div class="swatch" data-color="#e879f9" data-target="tie" style="background:#e879f9" onclick="applyColor('tie','#e879f9',this)"></div>
                             <div class="swatch" data-color="#ffffff" data-target="tie" style="background:#ffffff" onclick="applyColor('tie','#ffffff',this)"></div>
-                            <input type="color" class="color-picker-input" id="tie-custom" value="#eab308" title="Custom color" onchange="applyColorCustom('tie', this.value)">
+                            <input type="color" class="color-picker-input" id="tie-custom" value="#eab308" onchange="applyColorCustom('tie',this.value)">
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- ── History Board ── -->
-        <div class="panel" style="animation-delay: 0.2s">
+        <div class="panel" style="animation-delay:0.2s">
             <h2>LIVE HISTORY BOARD</h2>
             <div class="history-container" id="history-board">
-                <div style="color: #475569; font-size: 0.85rem;">No history yet — click Dragon or Tiger above.</div>
+                <div style="color:#475569;font-size:0.85rem;">No history yet &mdash; click Dragon or Tiger above.</div>
             </div>
-
-            <!-- Distribution Bar -->
-            <div class="dist-bar-container" id="dist-section" style="display: none;">
+            <div class="dist-bar-container" id="dist-section" style="display:none;">
                 <div class="dist-bar">
-                    <div class="dist-dragon" id="dist-d" style="width: 50%"></div>
-                    <div class="dist-tiger" id="dist-t" style="width: 50%"></div>
+                    <div class="dist-dragon" id="dist-d" style="width:50%"></div>
+                    <div class="dist-tiger" id="dist-t" style="width:50%"></div>
                 </div>
                 <div class="dist-labels">
-                    <span style="color: var(--dragon);">🐉 <span id="lbl-d">0</span></span>
-                    <span style="color: var(--tiger);"><span id="lbl-t">0</span> 🐅</span>
+                    <span style="color:var(--dragon);">&#x1F409; <span id="lbl-d">0</span></span>
+                    <span style="color:var(--tiger);"><span id="lbl-t">0</span> &#x1F405;</span>
                 </div>
             </div>
-
-            <!-- Current Streak -->
             <div class="streak-bar hidden" id="streak-bar">
-                <span id="streak-icon"></span> <span id="streak-text">—</span>
+                <span id="streak-icon"></span> <span id="streak-text">&mdash;</span>
             </div>
         </div>
 
-        <!-- ── Stats Panel ── -->
-        <div class="panel hidden" id="stats-panel" style="animation-delay: 0.3s">
-            <h2>📊 PERFORMANCE</h2>
+        <div class="panel hidden" id="stats-panel" style="animation-delay:0.3s">
+            <h2>&#x1F4CA; PERFORMANCE</h2>
             <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-label">Dragon %</div>
-                    <div class="stat-value" id="stat-dpct" style="color: var(--dragon);">0%</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Tiger %</div>
-                    <div class="stat-value" id="stat-tpct" style="color: var(--tiger);">0%</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Accuracy</div>
-                    <div class="stat-value" id="stat-acc" style="color: var(--success);">0%</div>
-                </div>
+                <div class="stat-card"><div class="stat-label">Dragon %</div><div class="stat-value" id="stat-dpct" style="color:var(--dragon);">0%</div></div>
+                <div class="stat-card"><div class="stat-label">Tiger %</div><div class="stat-value" id="stat-tpct" style="color:var(--tiger);">0%</div></div>
+                <div class="stat-card"><div class="stat-label">Accuracy</div><div class="stat-value" id="stat-acc" style="color:var(--success);">0%</div></div>
             </div>
-
-            <!-- Streak Stats -->
-            <div class="stats-grid" style="margin-top: 0.8rem;">
-                <div class="stat-card">
-                    <div class="stat-label">Win Streak</div>
-                    <div class="stat-value" id="stat-wstreak" style="color: var(--success);">0</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Lose Streak</div>
-                    <div class="stat-value" id="stat-lstreak" style="color: var(--tiger);">0</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Alt. Rate</div>
-                    <div class="stat-value" id="stat-altrate" style="color: var(--accent);">0%</div>
-                </div>
+            <div class="stats-grid" style="margin-top:0.8rem;">
+                <div class="stat-card"><div class="stat-label">Win Streak</div><div class="stat-value" id="stat-wstreak" style="color:var(--success);">0</div></div>
+                <div class="stat-card"><div class="stat-label">Lose Streak</div><div class="stat-value" id="stat-lstreak" style="color:var(--tiger);">0</div></div>
+                <div class="stat-card"><div class="stat-label">Best Streak</div><div class="stat-value" id="stat-maxstreak" style="color:var(--accent);">0</div></div>
+            </div>
+            <div class="stats-grid" style="margin-top:0.8rem;">
+                <div class="stat-card" style="grid-column:span 2"><div class="stat-label">Alt. Rate</div><div class="stat-value" id="stat-altrate" style="color:var(--accent);">0%</div></div>
+                <div class="stat-card"><div class="stat-label">Tie Count</div><div class="stat-value" id="stat-tiecount" style="color:var(--tie);">0</div></div>
             </div>
         </div>
-
-        <!-- ── AI Council Panel ── -->
-        <div class="panel" style="animation-delay: 0.4s">
-            <button class="btn-predict" id="btn-predict" onclick="askAICouncil()">🤖 ASK AI COUNCIL</button>
-
+        <div class="panel" style="animation-delay:0.4s">
+            <button class="btn-predict" id="btn-predict" onclick="askAICouncil()">&#x1F916; ASK AI COUNCIL</button>
             <div class="loader hidden" id="loader"></div>
-            <div id="council-status" style="text-align:center; color: var(--text-muted); font-size: 0.85rem; display: none;"></div>
-            <!-- Error Box -->
-            <div id="council-error" style="display:none; background: rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.35); color:#fca5a5; border-radius:12px; padding: 0.8rem 1rem; text-align:center; font-size:0.9rem; font-weight:600; margin-top:0.5rem;"></div>
-
-            <div class="result-display" id="result-display">
-                <div class="confidence" id="res-conf">Confidence: —</div>
-                <div class="final-prediction" id="res-pred">—</div>
+            <div class="council-status hidden" id="council-status"></div>
+            <div class="council-error hidden" id="council-error"></div>
+            <div class="result-display" id="result-display" style="display:none;">
+                <div class="final-prediction" id="res-pred"></div>
+                <div class="confidence" id="res-conf"></div>
+                <div class="api-badge" id="api-badge"></div>
                 <div class="reasoning" id="res-reason"></div>
-                <div style="font-size: 0.75rem; color: var(--text-muted);" id="res-meta"></div>
+                <div class="meta-info" id="res-meta"></div>
             </div>
-
-            <!-- Expert Opinions -->
             <div class="council-section hidden" id="opinions-section">
-                <h2 style="font-size: 0.85rem; margin-top: 1rem;">🧠 EXPERT OPINIONS</h2>
+                <h3 style="font-size:0.85rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:0.8rem;">&#x1F9E0; Expert Opinions</h3>
                 <div id="opinions-container"></div>
             </div>
         </div>
-
-        <!-- ── Prediction Log ── -->
-        <div class="panel hidden" id="log-panel" style="animation-delay: 0.5s">
-            <h2>📋 PREDICTION LOG</h2>
-            <div id="log-container" style="max-height: 200px; overflow-y: auto;"></div>
+        <div class="panel hidden" id="log-panel" style="animation-delay:0.5s">
+            <h2>&#x1F4CB; PREDICTION LOG</h2>
+            <div id="log-container" style="max-height:200px;overflow-y:auto;"></div>
         </div>
-
-        <!-- ── Trend Chart ── -->
-        <div class="panel hidden" id="chart-panel" style="animation-delay: 0.6s">
-            <h2>📈 TREND ANALYSIS</h2>
+        <div class="panel hidden" id="chart-panel" style="animation-delay:0.6s">
+            <h2>&#x1F4C8; TREND ANALYSIS</h2>
             <div class="chart-container">
                 <canvas id="trendChart" height="160"></canvas>
             </div>
         </div>
-
     </div>
 
 <script>
-    let trendChart = null;
+'use strict';
+var trendChart=null,rollInterval=null;
+fetchHistory();
 
-    // ── Init ──
-    fetchHistory();
-
-    // ── Update UI ──
-    function updateUI(history, stats, analytics) {
-        if (history) {
-            localStorage.setItem('dt-game-history', JSON.stringify(history));
-        }
-        updateHistoryBoard(history);
-        updateAccuracy(stats);
-        updateAnalytics(analytics);
-        updateDistribution(analytics);
-        updateStreak(analytics);
-        updatePredictionLog(stats);
-        updateTrendChart(history);
+function updateUI(h,s,a){
+    if(h){try{localStorage.setItem('dt-game-history',JSON.stringify(h));}catch(e){}}
+    updateHistoryBoard(h);updateAccuracy(s);updateAnalytics(a);
+    updateDistribution(a);updateStreak(a);updatePredictionLog(s);updateTrendChart(h);
+}
+function updateHistoryBoard(h){
+    var board=document.getElementById('history-board'),count=document.getElementById('history-count');
+    if(!board||!count)return;
+    count.textContent='Count: '+h.length;
+    if(h.length===0){board.innerHTML='<div style="color:#475569;font-size:0.85rem;">No history yet &mdash; click Dragon or Tiger above.</div>';return;}
+    board.innerHTML='';
+    h.forEach(function(res){
+        var b=document.createElement('div'),init=res==='Dragon'?'D':(res==='Tiger'?'T':'Tie');
+        b.className='history-bead bead-'+init;b.textContent=init;board.appendChild(b);
+    });
+    requestAnimationFrame(function(){board.scrollTop=board.scrollHeight;});
+}
+function updateAccuracy(s){
+    var at=document.getElementById('accuracy-tab'),sa=document.getElementById('stat-acc');
+    if(!at)return;
+    if(s&&s.total_predictions>0){
+        var acc=Math.round(s.correct_predictions/s.total_predictions*100);
+        at.innerHTML='Accuracy: '+acc+'%<br><span style="font-size:0.75rem;color:#94a3b8;">('+s.correct_predictions+'/'+s.total_predictions+')</span>';
+        if(sa)sa.textContent=acc+'%';
+        var ws=document.getElementById('stat-wstreak'),ls=document.getElementById('stat-lstreak'),ms=document.getElementById('stat-maxstreak');
+        if(ws)ws.textContent=s.win_streak||0;
+        if(ls)ls.textContent=s.lose_streak||0;
+        if(ms)ms.textContent=s.max_win_streak||0;
+    }else{
+        at.innerHTML='Accuracy: 0%<br><span style="font-size:0.75rem;color:#94a3b8;">(0/0)</span>';
     }
-
-    function updateHistoryBoard(history) {
-        const board = document.getElementById('history-board');
-        const count = document.getElementById('history-count');
-        count.textContent = `Count: ${history.length}`;
-
-        if (history.length === 0) {
-            board.innerHTML = '<div style="color: #475569; font-size: 0.85rem;">No history yet — click Dragon or Tiger above.</div>';
-            return;
-        }
-
-        board.innerHTML = '';
-        history.forEach(res => {
-            const bead = document.createElement('div');
-            let initial = res === 'Dragon' ? 'D' : (res === 'Tiger' ? 'T' : 'Tie');
-            bead.className = `history-bead bead-${initial}`;
-            bead.textContent = initial;
-            board.appendChild(bead);
-        });
-        board.scrollTop = board.scrollHeight;
-    }
-
-    function updateAccuracy(stats) {
-        if (stats && stats.total_predictions > 0) {
-            const acc = Math.round((stats.correct_predictions / stats.total_predictions) * 100);
-            document.getElementById('accuracy-tab').innerHTML =
-                `Accuracy: ${acc}%<br><span style="font-size: 0.75rem; color: #94a3b8;">(${stats.correct_predictions}/${stats.total_predictions})</span>`;
-            document.getElementById('stat-acc').textContent = acc + '%';
-            document.getElementById('stat-wstreak').textContent = stats.win_streak || 0;
-            document.getElementById('stat-lstreak').textContent = stats.lose_streak || 0;
-        } else {
-            document.getElementById('accuracy-tab').innerHTML =
-                `Accuracy: 0%<br><span style="font-size: 0.75rem; color: #94a3b8;">(0/0)</span>`;
-        }
-    }
-
-    function updateAnalytics(analytics) {
-        if (!analytics || analytics.total === 0) {
-            document.getElementById('stats-panel').classList.add('hidden');
-            return;
-        }
-        document.getElementById('stats-panel').classList.remove('hidden');
-        document.getElementById('stat-dpct').textContent = analytics.dragon_pct + '%';
-        document.getElementById('stat-tpct').textContent = analytics.tiger_pct + '%';
-        document.getElementById('stat-altrate').textContent = analytics.alternation_rate + '%';
-    }
-
-    function updateDistribution(analytics) {
-        if (!analytics || analytics.total === 0) {
-            document.getElementById('dist-section').style.display = 'none';
-            return;
-        }
-        document.getElementById('dist-section').style.display = 'block';
-        const total = analytics.dragon_count + analytics.tiger_count || 1;
-        const dp = Math.round(analytics.dragon_count / total * 100);
-        const tp = 100 - dp;
-        document.getElementById('dist-d').style.width = dp + '%';
-        document.getElementById('dist-t').style.width = tp + '%';
-        document.getElementById('lbl-d').textContent = `${analytics.dragon_count} (${dp}%)`;
-        document.getElementById('lbl-t').textContent = `${analytics.tiger_count} (${tp}%)`;
-    }
-
-    function updateStreak(analytics) {
-        if (!analytics || !analytics.current_streak || !analytics.current_streak.type) {
-            document.getElementById('streak-bar').classList.add('hidden');
-            return;
-        }
-        const s = analytics.current_streak;
-        const bar = document.getElementById('streak-bar');
-        bar.classList.remove('hidden', 'streak-dragon', 'streak-tiger');
-        if (s.type === 'Dragon') {
-            bar.classList.add('streak-dragon');
-            document.getElementById('streak-icon').textContent = '🐉';
-        } else {
-            bar.classList.add('streak-tiger');
-            document.getElementById('streak-icon').textContent = '🐅';
-        }
-        document.getElementById('streak-text').textContent = `${s.type} streak: ${s.count} round${s.count > 1 ? 's' : ''}`;
-    }
-
-    function updatePredictionLog(stats) {
-        const log = stats.prediction_log;
-        if (!log || log.length === 0) {
-            document.getElementById('log-panel').classList.add('hidden');
-            return;
-        }
-        document.getElementById('log-panel').classList.remove('hidden');
-        const container = document.getElementById('log-container');
-        container.innerHTML = '';
-        // Reverse to show newest first
-        [...log].reverse().forEach(entry => {
-            const div = document.createElement('div');
-            div.className = `log-item ${entry.correct ? 'log-pass' : 'log-fail'}`;
-            div.innerHTML = `
-                <span>${entry.time} — Predicted: <strong>${entry.predicted}</strong> → Actual: <strong>${entry.actual}</strong></span>
-                <span class="${entry.correct ? 'log-status-pass' : 'log-status-fail'}">${entry.correct ? '✅ PASS' : '❌ FAIL'}</span>
-            `;
-            container.appendChild(div);
-        });
-    }
-
-    function updateTrendChart(history) {
-        if (!history || history.length < 5) {
-            document.getElementById('chart-panel').classList.add('hidden');
-            return;
-        }
-        document.getElementById('chart-panel').classList.remove('hidden');
-        const last30 = history.slice(-30);
-        const labels = last30.map((_, i) => `#${history.length - last30.length + i + 1}`);
-        const values = last30.map(r => r === 'Dragon' ? 1 : (r === 'Tiger' ? -1 : 0));
-
-        const ctx = document.getElementById('trendChart').getContext('2d');
-        if (trendChart) trendChart.destroy();
-
-        Chart.defaults.color = '#94a3b8';
-        trendChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'D/T Trend',
-                    data: values,
-                    backgroundColor: values.map(v => v > 0 ? 'rgba(59,130,246,0.7)' : (v < 0 ? 'rgba(239,68,68,0.7)' : 'rgba(234,179,8,0.7)')),
-                    borderWidth: 0,
-                    borderRadius: 4,
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    y: {
-                        min: -1.5, max: 1.5,
-                        ticks: {
-                            callback: v => v === 1 ? '🐉' : (v === -1 ? '🐅' : ''),
-                            stepSize: 1
-                        },
-                        grid: { color: 'rgba(255,255,255,0.05)' }
-                    },
-                    x: {
-                        ticks: { display: false },
-                        grid: { display: false }
-                    }
+}
+function updateAnalytics(a){
+    var sp=document.getElementById('stats-panel');
+    if(!sp)return;
+    if(!a||a.total===0){sp.classList.add('hidden');return;}
+    sp.classList.remove('hidden');
+    var dp=document.getElementById('stat-dpct'),tp=document.getElementById('stat-tpct');
+    var ar=document.getElementById('stat-altrate'),tc=document.getElementById('stat-tiecount');
+    if(dp)dp.textContent=a.dragon_pct+'%';
+    if(tp)tp.textContent=a.tiger_pct+'%';
+    if(ar)ar.textContent=a.alternation_rate+'%';
+    if(tc)tc.textContent=a.tie_count||0;
+}
+function updateDistribution(a){
+    var ds=document.getElementById('dist-section');
+    if(!ds)return;
+    if(!a||a.total===0){ds.style.display='none';return;}
+    ds.style.display='block';
+    var tot=(a.dragon_count+a.tiger_count)||1,dp=Math.round(a.dragon_count/tot*100),tp=100-dp;
+    var dd=document.getElementById('dist-d'),dt=document.getElementById('dist-t');
+    var ld=document.getElementById('lbl-d'),lt=document.getElementById('lbl-t');
+    if(dd)dd.style.width=dp+'%';if(dt)dt.style.width=tp+'%';
+    if(ld)ld.textContent=a.dragon_count+' ('+dp+'%)';
+    if(lt)lt.textContent=a.tiger_count+' ('+tp+'%)';
+}
+function updateStreak(a){
+    var bar=document.getElementById('streak-bar');
+    if(!bar)return;
+    if(!a||!a.current_streak||!a.current_streak.type){bar.classList.add('hidden');return;}
+    var s=a.current_streak;
+    bar.classList.remove('hidden','streak-dragon','streak-tiger');
+    var icon=document.getElementById('streak-icon'),text=document.getElementById('streak-text');
+    if(s.type==='Dragon'){bar.classList.add('streak-dragon');if(icon)icon.textContent='\u{1F409}';}
+    else if(s.type==='Tiger'){bar.classList.add('streak-tiger');if(icon)icon.textContent='\u{1F405}';}
+    else{if(icon)icon.textContent='\u{1F91D}';}
+    if(text)text.textContent=s.type+' streak: '+s.count+' round'+(s.count>1?'s':'');
+}
+function updatePredictionLog(s){
+    var lp=document.getElementById('log-panel'),cont=document.getElementById('log-container');
+    if(!lp||!cont)return;
+    var log=s&&s.prediction_log;
+    if(!log||log.length===0){lp.classList.add('hidden');return;}
+    lp.classList.remove('hidden');cont.innerHTML='';
+    [...log].reverse().forEach(function(e){
+        var div=document.createElement('div');
+        div.className='log-item '+(e.correct?'log-pass':'log-fail');
+        var left=document.createElement('span');
+        left.textContent=e.time+' \u2014 Predicted: '+e.predicted+' \u2192 Actual: '+e.actual;
+        var right=document.createElement('span');
+        right.className=e.correct?'log-status-pass':'log-status-fail';
+        right.textContent=e.correct?'\u2705 PASS':'\u274C FAIL';
+        div.appendChild(left);div.appendChild(right);cont.appendChild(div);
+    });
+}
+function updateTrendChart(h){
+    var cp=document.getElementById('chart-panel'),cv=document.getElementById('trendChart');
+    if(!cp||!cv)return;
+    if(!h||h.length<5){cp.classList.add('hidden');return;}
+    cp.classList.remove('hidden');
+    var last30=h.slice(-30);
+    var labels=last30.map(function(_,i){return '#'+(h.length-last30.length+i+1);});
+    var values=last30.map(function(r){return r==='Dragon'?1:(r==='Tiger'?-1:0);});
+    if(trendChart){trendChart.destroy();trendChart=null;}
+    Chart.defaults.color='#94a3b8';
+    trendChart=new Chart(cv.getContext('2d'),{
+        type:'bar',
+        data:{labels:labels,datasets:[{label:'D/T Trend',data:values,
+            backgroundColor:values.map(function(v){return v>0?'rgba(59,130,246,0.7)':(v<0?'rgba(239,68,68,0.7)':'rgba(234,179,8,0.7)');}),
+            borderWidth:0,borderRadius:4}]},
+        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+            scales:{y:{min:-1.5,max:1.5,ticks:{callback:function(v){return v===1?'\u{1F409}':(v===-1?'\u{1F405}':'');},stepSize:1},grid:{color:'rgba(255,255,255,0.05)'}},
+            x:{ticks:{display:false},grid:{display:false}}}}
+    });
+}
+async function fetchHistory(){
+    try{
+        var res=await fetch('/api/history');
+        if(!res.ok)throw new Error('HTTP '+res.status);
+        var data=await res.json();updateUI(data.history,data.stats,data.analytics);
+    }catch(e){
+        var eb=document.getElementById('init-error');
+        if(eb){eb.classList.remove('hidden');setTimeout(function(){eb.classList.add('hidden');},8000);}
+        try{
+            var saved=localStorage.getItem('dt-game-history');
+            if(saved){
+                var sh=JSON.parse(saved);
+                if(Array.isArray(sh)&&sh.length>0){
+                    var r2=await fetch('/api/history',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'restore',history:sh})});
+                    var d2=await r2.json();updateUI(d2.history,d2.stats,d2.analytics);return;
                 }
             }
-        });
+        }catch(e2){}
+        console.error('fetchHistory failed:',e);
     }
+}
+async function addResult(result){
+    var ids=['btn-dragon','btn-tiger','btn-tie','btn-undo'];
+    ids.forEach(function(id){var el=document.getElementById(id);if(el){el.disabled=true;el.classList.add('btn-loading');}});
+    try{
+        var res=await fetch('/api/history',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'add',result:result})});
+        if(!res.ok)throw new Error('HTTP '+res.status);
+        var data=await res.json();updateUI(data.history,data.stats,data.analytics);
+        var rd=document.getElementById('result-display'),os=document.getElementById('opinions-section');
+        if(rd)rd.style.display='none';if(os)os.classList.add('hidden');
+    }catch(e){console.error('Add error:',e);showError('Result add karne mein error. Dobara try karo.');}
+    ids.forEach(function(id){var el=document.getElementById(id);if(el){el.disabled=false;el.classList.remove('btn-loading');}});
+}
+async function undoHistory(){
+    var btn=document.getElementById('btn-undo');
+    if(btn){btn.disabled=true;btn.classList.add('btn-loading');}
+    try{
+        var res=await fetch('/api/history',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'undo'})});
+        var data=await res.json();updateUI(data.history,data.stats,data.analytics);
+        var rd=document.getElementById('result-display');if(rd)rd.style.display='none';
+    }catch(e){console.error('Undo error:',e);}
+    if(btn){btn.disabled=false;btn.classList.remove('btn-loading');}
+}
+function clearHistory(){var m=document.getElementById('confirm-modal');if(m)m.classList.remove('hidden');}
+function closeModal(){var m=document.getElementById('confirm-modal');if(m)m.classList.add('hidden');}
+async function confirmClear(){
+    closeModal();
+    try{
+        var res=await fetch('/api/history',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'clear'})});
+        var data=await res.json();
+        try{localStorage.removeItem('dt-game-history');}catch(e){}
+        updateUI(data.history,data.stats,data.analytics);
+        var rd=document.getElementById('result-display'),os=document.getElementById('opinions-section'),lp=document.getElementById('log-panel');
+        if(rd)rd.style.display='none';if(os)os.classList.add('hidden');if(lp)lp.classList.add('hidden');
+    }catch(e){console.error('Clear error:',e);}
+}
+</script>
 
-    // ── API Calls ──
-    async function fetchHistory() {
-        try {
-            const res = await fetch('/api/history');
-            const data = await res.json();
-            
-            // Check if server history is empty but localStorage has history (survives server spin-downs)
-            const savedHistoryStr = localStorage.getItem('dt-game-history');
-            if ((!data.history || data.history.length === 0) && savedHistoryStr) {
-                const savedHistory = JSON.parse(savedHistoryStr);
-                if (savedHistory && savedHistory.length > 0) {
-                    await restoreHistory(savedHistory);
-                    return;
+<script>
+async function askAICouncil(){
+    var btn=document.getElementById('btn-predict');
+    if(!btn||btn.disabled)return;
+    if(rollInterval){clearInterval(rollInterval);rollInterval=null;}
+    btn.disabled=true;btn.textContent='\u23F3 COUNCIL IS MEETING...';
+    var rd=document.getElementById('result-display'),os=document.getElementById('opinions-section');
+    var loader=document.getElementById('loader'),statusDiv=document.getElementById('council-status');
+    if(rd)rd.style.display='none';if(os)os.classList.add('hidden');
+    if(loader)loader.classList.remove('hidden');
+    var statuses=['StreakBot analyzing momentum...','ZigzagAI scanning patterns...','FreqMaster counting frequencies...','RiskGuard assessing risk...','Chairman building consensus...'];
+    var si=0;
+    if(statusDiv){statusDiv.classList.remove('hidden');statusDiv.textContent=statuses[0];}
+    var statusInterval=setInterval(function(){si=(si+1)%statuses.length;if(statusDiv)statusDiv.textContent=statuses[si];},3000);
+    var controller=new AbortController(),timeoutId=setTimeout(function(){controller.abort();},20000);
+    try{
+        var res=await fetch('/api/predict',{signal:controller.signal});
+        clearTimeout(timeoutId);clearInterval(statusInterval);
+        if(statusDiv)statusDiv.classList.add('hidden');if(loader)loader.classList.add('hidden');
+        if(!res.ok)throw new Error('HTTP '+res.status);
+        var data=await res.json();
+        var predEl=document.getElementById('res-pred');
+        if(!predEl){btn.disabled=false;btn.textContent='\u{1F916} ASK AI COUNCIL';return;}
+        var options=['\u{1F409} Dragon','\u{1F405} Tiger','\u{1F409} Dragon','\u{1F405} Tiger'],rolls=0;
+        rollInterval=setInterval(function(){
+            predEl.textContent=options[rolls%options.length];
+            predEl.className='final-prediction pred-'+(rolls%2===0?'Dragon':'Tiger');
+            rolls++;
+            if(rolls>12){
+                clearInterval(rollInterval);rollInterval=null;
+                var icon=data.prediction==='Dragon'?'\u{1F409}':(data.prediction==='Tiger'?'\u{1F405}':'\u{1F91D}');
+                predEl.textContent=icon+' '+data.prediction;
+                predEl.className='final-prediction pred-'+data.prediction;
+                var ce=document.getElementById('res-conf');
+                if(ce){ce.textContent='Confidence: '+(data.confidence||'?');ce.className='confidence conf-'+(data.confidence||'MEDIUM');}
+                var ab=document.getElementById('api-badge');
+                if(ab){
+                    if(data.api_used==='gemini'){ab.textContent='\u2728 Gemini AI';ab.className='api-badge badge-gemini';}
+                    else if(data.api_used==='openrouter'){ab.textContent='\u26A1 OpenRouter';ab.className='api-badge badge-openrouter';}
+                    else{ab.textContent='\u{1F4CA} Pattern';ab.className='api-badge badge-fallback';}
                 }
-            }
-            
-            updateUI(data.history, data.stats, data.analytics);
-        } catch(e) { console.error('Fetch history error:', e); }
-    }
-
-    async function restoreHistory(savedHistory) {
-        try {
-            const res = await fetch('/api/history', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'restore', history: savedHistory })
-            });
-            const data = await res.json();
-            updateUI(data.history, data.stats, data.analytics);
-        } catch(e) { console.error('Restore history error:', e); }
-    }
-
-    async function addResult(result) {
-        // Disable buttons briefly
-        ['btn-dragon', 'btn-tiger'].forEach(id => document.getElementById(id).disabled = true);
-        try {
-            const res = await fetch('/api/history', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'add', result: result })
-            });
-            const data = await res.json();
-            updateUI(data.history, data.stats, data.analytics);
-            document.getElementById('result-display').style.display = 'none';
-            document.getElementById('opinions-section').classList.add('hidden');
-        } catch(e) { console.error('Add result error:', e); }
-        ['btn-dragon', 'btn-tiger'].forEach(id => document.getElementById(id).disabled = false);
-    }
-
-    async function undoHistory() {
-        try {
-            const res = await fetch('/api/history', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'undo' })
-            });
-            const data = await res.json();
-            updateUI(data.history, data.stats, data.analytics);
-            document.getElementById('result-display').style.display = 'none';
-        } catch(e) { console.error('Undo error:', e); }
-    }
-
-    async function clearHistory() {
-        if (!confirm('Clear all history and stats?')) return;
-        try {
-            const res = await fetch('/api/history', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'clear' })
-            });
-            const data = await res.json();
-            localStorage.removeItem('dt-game-history'); // Clear local storage too!
-            updateUI(data.history, data.stats, data.analytics);
-            document.getElementById('result-display').style.display = 'none';
-            document.getElementById('opinions-section').classList.add('hidden');
-            document.getElementById('log-panel').classList.add('hidden');
-        } catch(e) { console.error('Clear error:', e); }
-    }
-
-    async function askAICouncil() {
-        const btn = document.getElementById('btn-predict');
-        const loader = document.getElementById('loader');
-        const resultDisplay = document.getElementById('result-display');
-        const statusDiv = document.getElementById('council-status');
-
-        btn.disabled = true;
-        btn.textContent = "🧠 COUNCIL IS MEETING...";
-        resultDisplay.style.display = 'none';
-        document.getElementById('opinions-section').classList.add('hidden');
-        loader.classList.remove('hidden');
-
-        // Animated council status
-        const statuses = [
-            'StreakBot analyzing momentum...',
-            'ZigzagAI scanning patterns...',
-            'FreqMaster counting frequencies...',
-            'RiskGuard assessing risk...',
-            'Chairman building consensus...'
-        ];
-        let si = 0;
-        statusDiv.style.display = 'block';
-        statusDiv.textContent = statuses[0];
-        const statusInterval = setInterval(() => {
-            si = (si + 1) % statuses.length;
-            statusDiv.textContent = statuses[si];
-        }, 3000);
-
-        try {
-            const res = await fetch('/api/predict');
-            const data = await res.json();
-            clearInterval(statusInterval);
-            statusDiv.style.display = 'none';
-            loader.classList.add('hidden');
-
-            // Slot machine animation for prediction
-            const predEl = document.getElementById('res-pred');
-            const options = ['🐉 Dragon', '🐅 Tiger', '🐉 Dragon', '🐅 Tiger'];
-            let rolls = 0;
-            const rollInterval = setInterval(() => {
-                predEl.textContent = options[rolls % options.length];
-                predEl.className = `final-prediction pred-${rolls % 2 === 0 ? 'Dragon' : 'Tiger'}`;
-                rolls++;
-                if (rolls > 12) {
-                    clearInterval(rollInterval);
-                    // Final result
-                    const icon = data.prediction === 'Dragon' ? '🐉' : (data.prediction === 'Tiger' ? '🐅' : '🤝');
-                    predEl.textContent = `${icon} ${data.prediction}`;
-                    predEl.className = `final-prediction pred-${data.prediction}`;
-                    document.getElementById('res-conf').textContent = `Confidence: ${data.confidence}`;
-                    document.getElementById('res-reason').textContent = `"${data.reasoning}"`;
-                    document.getElementById('res-meta').textContent =
-                        `${data.council_members || 0} experts responded • Meeting: ${data.duration || 0}s`;
-
-                    // Play sound on HIGH confidence
-                    if (data.confidence === 'HIGH') playAlert();
-
-                    // Show opinions
-                    if (data.opinions && data.opinions.length > 0) {
-                        const opinionsDiv = document.getElementById('opinions-container');
-                        opinionsDiv.innerHTML = '';
-                        data.opinions.forEach(op => {
-                            const card = document.createElement('div');
-                            card.className = 'opinion-card';
-                            card.innerHTML = `
-                                <div class="opinion-name">${op.name} — ${op.role || ''}</div>
-                                <div class="opinion-text">${op.analysis.substring(0, 300)}${op.analysis.length > 300 ? '...' : ''}</div>
-                            `;
-                            opinionsDiv.appendChild(card);
+                var re=document.getElementById('res-reason');if(re)re.textContent='"'+(data.reasoning||'')+'"';
+                var me=document.getElementById('res-meta');if(me)me.textContent=(data.council_members||0)+' experts \u2022 '+( data.duration||0)+'s';
+                if(data.confidence==='HIGH')playAlert();
+                if(data.opinions&&data.opinions.length>0){
+                    var od=document.getElementById('opinions-container'),osec=document.getElementById('opinions-section');
+                    if(od){
+                        od.innerHTML='';
+                        data.opinions.forEach(function(op){
+                            var card=document.createElement('div');card.className='opinion-card';
+                            var n=document.createElement('div');n.className='opinion-name';n.textContent=op.name+' \u2014 '+(op.role||'');
+                            var t=document.createElement('div');t.className='opinion-text';
+                            var a=op.analysis||'';t.textContent=a.length>300?a.substring(0,300)+'...':a;
+                            card.appendChild(n);card.appendChild(t);od.appendChild(card);
                         });
-                        document.getElementById('opinions-section').classList.remove('hidden');
+                        if(osec)osec.classList.remove('hidden');
                     }
                 }
-            }, 60);
-
-            resultDisplay.style.display = 'flex';
-
-        } catch (err) {
-            clearInterval(statusInterval);
-            statusDiv.style.display = 'none';
-            loader.classList.add('hidden');
-            // Show error in page (no popup alert)
-            const errBox = document.getElementById('council-error');
-            errBox.innerHTML = '⚠️ AI Council server se connect nahi ho pa raha. Server busy hai ya API key set nahi hai — kuch der baad dobara try karein.';
-            errBox.style.display = 'block';
-            setTimeout(() => { errBox.style.display = 'none'; }, 6000);
-            console.error('Council API Error:', err);
-        }
-
-        btn.disabled = false;
-        btn.textContent = "🤖 ASK AI COUNCIL";
+            }
+        },60);
+        if(rd)rd.style.display='flex';
+    }catch(err){
+        clearTimeout(timeoutId);clearInterval(statusInterval);
+        if(statusDiv)statusDiv.classList.add('hidden');if(loader)loader.classList.add('hidden');
+        var msg=err.name==='AbortError'?'\u23F0 Timeout. Server busy hai, retry karo.':'\u{1F6A8} AI Council connect nahi ho pa raha. Retry karo.';
+        showError(msg);console.error('Council error:',err);
     }
-
-    function playAlert() {
-        try {
-            const ctx = new (window.AudioContext || window.webkitAudioContext)();
-            [600, 800, 1000].forEach((f, i) => {
-                const o = ctx.createOscillator();
-                const g = ctx.createGain();
-                o.connect(g); g.connect(ctx.destination);
-                o.frequency.value = f;
-                g.gain.value = 0.08;
-                o.start(ctx.currentTime + i * 0.15);
-                o.stop(ctx.currentTime + i * 0.15 + 0.12);
-            });
-        } catch(e) {}
-    }
-
-    // ── Color Customizer ──
-    function toggleColorPanel() {
-        const panel = document.getElementById('color-panel');
-        const chevron = document.getElementById('color-chevron');
-        const isOpen = panel.style.display !== 'none';
-        panel.style.display = isOpen ? 'none' : 'block';
-        chevron.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
-    }
-
-    function hexToRgb(hex) {
-        const r = parseInt(hex.slice(1,3), 16);
-        const g = parseInt(hex.slice(3,5), 16);
-        const b = parseInt(hex.slice(5,7), 16);
-        return `${r}, ${g}, ${b}`;
-    }
-
-    function applyColor(target, color, el) {
-        const root = document.documentElement;
-        const rgb = hexToRgb(color);
-
-        if (target === 'dragon') {
-            root.style.setProperty('--dragon', color);
-            root.style.setProperty('--dragon-glow', `rgba(${rgb}, 0.5)`);
-            // Update button gradient
-            document.getElementById('btn-dragon').style.background = `linear-gradient(135deg, ${color}, ${shadeColor(color, -20)})`;
-            document.getElementById('btn-dragon').style.boxShadow = `0 4px 15px rgba(${rgb}, 0.4)`;
-            document.getElementById('dragon-custom').value = color;
-        } else if (target === 'tiger') {
-            root.style.setProperty('--tiger', color);
-            root.style.setProperty('--tiger-glow', `rgba(${rgb}, 0.5)`);
-            document.getElementById('btn-tiger').style.background = `linear-gradient(135deg, ${color}, ${shadeColor(color, -20)})`;
-            document.getElementById('btn-tiger').style.boxShadow = `0 4px 15px rgba(${rgb}, 0.4)`;
-            document.getElementById('tiger-custom').value = color;
-        } else if (target === 'tie') {
-            root.style.setProperty('--tie', color);
-            root.style.setProperty('--tie-glow', `rgba(${rgb}, 0.5)`);
-            document.getElementById('btn-tie').style.background = `linear-gradient(135deg, ${color}, ${shadeColor(color, -20)})`;
-            document.getElementById('btn-tie').style.boxShadow = `0 4px 15px rgba(${rgb}, 0.3)`;
-            document.getElementById('tie-custom').value = color;
-        }
-
-        // Update active swatch
-        if (el) {
-            document.querySelectorAll(`#${target}-swatches .swatch`).forEach(s => s.classList.remove('active'));
-            el.classList.add('active');
-        }
-
-        // Save to localStorage
-        localStorage.setItem(`dt-color-${target}`, color);
-    }
-
-    function applyColorCustom(target, color) {
-        applyColor(target, color, null);
-        // Remove active from all swatches for this target
-        document.querySelectorAll(`#${target}-swatches .swatch`).forEach(s => s.classList.remove('active'));
-    }
-
-    function shadeColor(hex, percent) {
-        const num = parseInt(hex.replace('#',''), 16);
-        const amt = Math.round(2.55 * percent);
-        const R = Math.min(255, Math.max(0, (num >> 16) + amt));
-        const G = Math.min(255, Math.max(0, ((num >> 8) & 0x00FF) + amt));
-        const B = Math.min(255, Math.max(0, (num & 0x0000FF) + amt));
-        return `#${((1 << 24) | (R << 16) | (G << 8) | B).toString(16).slice(1)}`;
-    }
-
-    function loadSavedColors() {
-        const saved = {
-            dragon: localStorage.getItem('dt-color-dragon'),
-            tiger:  localStorage.getItem('dt-color-tiger'),
-            tie:    localStorage.getItem('dt-color-tie')
-        };
-        if (saved.dragon) applyColor('dragon', saved.dragon, document.querySelector(`#dragon-swatches .swatch[data-color="${saved.dragon}"]`));
-        if (saved.tiger)  applyColor('tiger',  saved.tiger,  document.querySelector(`#tiger-swatches .swatch[data-color="${saved.tiger}"]`));
-        if (saved.tie)    applyColor('tie',    saved.tie,    document.querySelector(`#tie-swatches .swatch[data-color="${saved.tie}"]`));
-    }
-
-    // Load saved colors on page load
-    loadSavedColors();
-
+    btn.disabled=false;btn.textContent='\u{1F916} ASK AI COUNCIL';
+}
+function showError(msg){
+    var eb=document.getElementById('council-error');
+    if(!eb)return;eb.textContent=msg;eb.classList.remove('hidden');
+    setTimeout(function(){eb.classList.add('hidden');},6000);
+}
+function playAlert(){
+    try{
+        var ctx=new(window.AudioContext||window.webkitAudioContext)();
+        [600,800,1000].forEach(function(f,i){
+            var o=ctx.createOscillator(),g=ctx.createGain();
+            o.connect(g);g.connect(ctx.destination);
+            o.frequency.value=f;g.gain.value=0.08;
+            o.start(ctx.currentTime+i*0.15);o.stop(ctx.currentTime+i*0.15+0.12);
+        });
+    }catch(e){}
+}
+function toggleColorPanel(){
+    var p=document.getElementById('color-panel'),ch=document.getElementById('color-chevron');
+    if(!p)return;var open=p.style.display!=='none';
+    p.style.display=open?'none':'block';
+    if(ch)ch.style.transform=open?'rotate(0deg)':'rotate(90deg)';
+}
+function hexToRgb(h){return parseInt(h.slice(1,3),16)+', '+parseInt(h.slice(3,5),16)+', '+parseInt(h.slice(5,7),16);}
+function applyColor(target,color,el){
+    var root=document.documentElement,rgb=hexToRgb(color);
+    root.style.setProperty('--'+target,color);
+    root.style.setProperty('--'+target+'-glow','rgba('+rgb+',0.5)');
+    var btn=document.getElementById('btn-'+target);
+    if(btn){btn.style.background='linear-gradient(135deg,'+color+','+shadeColor(color,-20)+')';btn.style.boxShadow='0 4px 15px rgba('+rgb+',0.4)';}
+    var ci=document.getElementById(target+'-custom');if(ci)ci.value=color;
+    if(el){document.querySelectorAll('#'+target+'-swatches .swatch').forEach(function(s){s.classList.remove('active');});el.classList.add('active');}
+    try{localStorage.setItem('dt-color-'+target,color);}catch(e){}
+}
+function applyColorCustom(target,color){
+    applyColor(target,color,null);
+    document.querySelectorAll('#'+target+'-swatches .swatch').forEach(function(s){s.classList.remove('active');});
+}
+function shadeColor(hex,pct){
+    var num=parseInt(hex.replace('#',''),16),amt=Math.round(2.55*pct);
+    var R=Math.min(255,Math.max(0,(num>>16)+amt)),G=Math.min(255,Math.max(0,((num>>8)&0x00FF)+amt)),B=Math.min(255,Math.max(0,(num&0x0000FF)+amt));
+    return'#'+((1<<24)|(R<<16)|(G<<8)|B).toString(16).slice(1);
+}
+function loadSavedColors(){
+    ['dragon','tiger','tie'].forEach(function(t){
+        var saved=localStorage.getItem('dt-color-'+t);
+        if(saved){var sw=document.querySelector('#'+t+'-swatches .swatch[data-color="'+saved+'"]');applyColor(t,saved,sw||null);}
+    });
+}
+loadSavedColors();
 </script>
 </body>
 </html>
